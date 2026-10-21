@@ -51,7 +51,7 @@ export const ExpensesView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-white flex items-center space-x-2">
             <Wallet className="w-7 h-7 text-amber-400" />
@@ -78,8 +78,41 @@ export const ExpensesView: React.FC = () => {
         <span className="text-xs font-mono text-slate-500">{expenses.length} Entries</span>
       </div>
 
-      {/* Expenses Table */}
-      <div className="glass-panel rounded-2xl border-slate-800/80 overflow-hidden shadow-xl">
+      {/* Mobile Expense Cards (Small Screens) */}
+      <div className="space-y-3 md:hidden">
+        {expenses.length === 0 ? (
+          <div className="glass-panel p-8 text-center text-slate-500 rounded-2xl border-slate-800">
+            No expense records found
+          </div>
+        ) : (
+          expenses.map((exp) => (
+            <div
+              key={exp.id}
+              className="glass-panel p-4 rounded-2xl border-slate-800/90 space-y-2.5 shadow-lg"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-bold text-xs text-white">{exp.title}</h4>
+                  {exp.notes && <p className="text-[10px] text-slate-500 mt-0.5">{exp.notes}</p>}
+                </div>
+                <span className="font-mono font-extrabold text-rose-400 text-sm">
+                  ₹{exp.amount.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-[10px] text-slate-400">
+                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
+                  {exp.category}
+                </span>
+                <span>Paid via {exp.paymentMode}</span>
+                <span>{exp.expenseDate}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Expenses Table */}
+      <div className="hidden md:block glass-panel rounded-2xl border-slate-800/80 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-semibold">
@@ -125,8 +158,8 @@ export const ExpensesView: React.FC = () => {
 
       {/* Modal: Add Expense */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel bg-slate-900 border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="glass-panel bg-slate-900 border-slate-700 w-full max-w-sm rounded-2xl shadow-2xl p-4 sm:p-6">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-sm font-bold text-white">Record Expense</h3>
               <button onClick={() => setShowAddModal(false)}><X className="w-4 h-4 text-slate-400" /></button>

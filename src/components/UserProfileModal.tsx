@@ -127,55 +127,55 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-2xl bg-surface-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-2xl bg-surface-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/50">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <User className="w-5 h-5" />
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/50">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+              <User className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-100">User Profile & Account</h2>
-              <p className="text-xs text-slate-400">Manage your personal credentials, contact info, and security</p>
+              <h2 className="text-base sm:text-lg font-bold text-slate-100">User Profile &amp; Account</h2>
+              <p className="text-[10px] sm:text-xs text-slate-400">Manage your personal credentials, contact info, and security</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition"
+            className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab selection */}
-        <div className="flex border-b border-slate-800 bg-surface-950/30 px-6 pt-2">
+        <div className="flex border-b border-slate-800 bg-surface-950/30 px-3 sm:px-6 pt-1 sm:pt-2">
           <button
             onClick={() => { setActiveTab('profile'); setStatusMessage(null); }}
-            className={`flex items-center space-x-2 py-3 px-4 text-xs font-bold border-b-2 transition ${
+            className={`flex items-center space-x-1.5 sm:space-x-2 py-2.5 sm:py-3 px-3 sm:px-4 text-xs font-bold border-b-2 transition ${
               activeTab === 'profile'
                 ? 'border-amber-500 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <User className="w-4 h-4" />
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Profile Details</span>
           </button>
           <button
             onClick={() => { setActiveTab('security'); setStatusMessage(null); }}
-            className={`flex items-center space-x-2 py-3 px-4 text-xs font-bold border-b-2 transition ${
+            className={`flex items-center space-x-1.5 sm:space-x-2 py-2.5 sm:py-3 px-3 sm:px-4 text-xs font-bold border-b-2 transition ${
               activeTab === 'security'
                 ? 'border-amber-500 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <KeyRound className="w-4 h-4" />
+            <KeyRound className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Change Password</span>
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 flex-1">
           {/* Notification banner */}
           {statusMessage && (
             <div

@@ -37,6 +37,7 @@ export const POSBillingView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Cart & Order State
+  const [mobileTab, setMobileTab] = useState<'menu' | 'cart'>('menu');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orderType, setOrderType] = useState<OrderType>('TABLE');
   const [selectedTable, setSelectedTable] = useState<string>('T1');
@@ -237,10 +238,37 @@ export const POSBillingView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-5 min-h-[calc(100vh-6rem)]">
-      {/* Left & Middle: Menu Catalog & Categories */}
-      <div className="flex-1 space-y-4">
-        {/* Search, Filter & Veg Toggle Bar */}
+    <div className="space-y-3">
+      {/* Mobile Catalog vs Cart Segmented Switcher */}
+      <div className="lg:hidden flex items-center p-1 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-lg">
+        <button
+          onClick={() => setMobileTab('menu')}
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 ${
+            mobileTab === 'menu'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md font-extrabold'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <UtensilsCrossed className="w-3.5 h-3.5" />
+          <span>Menu ({filteredItems.length})</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('cart')}
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 ${
+            mobileTab === 'cart'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md font-extrabold'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <ShoppingBag className="w-3.5 h-3.5" />
+          <span>Cart ({cart.reduce((s, i) => s + i.quantity, 0)}) • ₹{netAmount}</span>
+        </button>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-5 min-h-[calc(100vh-6rem)]">
+        {/* Left & Middle: Menu Catalog & Categories */}
+        <div className={mobileTab === 'menu' ? 'flex-1 space-y-4' : 'hidden lg:block lg:flex-1 lg:space-y-4'}>
+          {/* Search, Filter & Veg Toggle Bar */}
         <div className="glass-panel p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 border-slate-800/80">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -341,14 +369,24 @@ export const POSBillingView: React.FC = () => {
       </div>
 
       {/* Right Column: Live Order Cart & Settlement Drawer */}
-      <div className="w-full lg:w-96 glass-panel rounded-2xl border-slate-800/80 flex flex-col justify-between p-4 shadow-2xl h-fit">
+      <div className={mobileTab === 'cart' ? 'w-full lg:w-96 glass-panel rounded-2xl border-slate-800/80 flex flex-col justify-between p-4 shadow-2xl h-fit' : 'hidden lg:flex lg:w-96 glass-panel rounded-2xl border-slate-800/80 flex-col justify-between p-4 shadow-2xl h-fit'}>
         {/* Order Header & Mode Toggle */}
         <div className="space-y-3 pb-3 border-b border-slate-800">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
-              <ShoppingBag className="w-4 h-4 text-amber-400" />
-              <span>Current Order</span>
-            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setMobileTab('menu')}
+                className="lg:hidden p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
+                title="Back to Catalog"
+              >
+                &larr; Menu
+              </button>
+              <span className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
+                <ShoppingBag className="w-4 h-4 text-amber-400" />
+                <span>Current Order</span>
+              </span>
+            </div>
             {cart.length > 0 && (
               <button
                 onClick={clearCart}
@@ -538,12 +576,36 @@ export const POSBillingView: React.FC = () => {
           </div>
         </div>
       </div>
+    </div>
+
+      {/* Floating Sticky Mobile Cart Pill when browsing menu */}
+      {cart.length > 0 && mobileTab === 'menu' && (
+        <div className="lg:hidden fixed bottom-16 left-3 right-3 z-20">
+          <button
+            type="button"
+            onClick={() => setMobileTab('cart')}
+            className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold rounded-2xl shadow-2xl shadow-amber-500/40 flex items-center justify-between active:scale-[0.98] transition border border-amber-300"
+          >
+            <div className="flex items-center space-x-2">
+              <span className="w-6 h-6 rounded-lg bg-slate-950/20 text-slate-950 flex items-center justify-center text-xs font-mono font-bold">
+                {cart.reduce((s, i) => s + i.quantity, 0)}
+              </span>
+              <span className="text-xs">Items in Cart</span>
+              <span className="text-xs font-mono font-extrabold">• ₹{netAmount}</span>
+            </div>
+            <span className="text-xs font-extrabold flex items-center space-x-1">
+              <span>View Cart &amp; Pay</span>
+              <span>&rarr;</span>
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Modal: Payment Settlement */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel bg-slate-900 border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="glass-panel bg-slate-900 border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-800">
               <div>
                 <h3 className="text-base font-bold text-white">Settle Order Payment</h3>
                 <p className="text-[11px] text-slate-400">Total Due: ₹{netAmount.toFixed(2)}</p>

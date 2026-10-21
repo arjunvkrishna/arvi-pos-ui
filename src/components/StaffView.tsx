@@ -467,7 +467,7 @@ export const StaffView: React.FC = () => {
       {/* Modal: Create Staff / Manager */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel bg-surface-900 border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="glass-panel bg-surface-900 border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-4 sm:p-6 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center space-x-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
@@ -485,7 +485,7 @@ export const StaffView: React.FC = () => {
 
             <form onSubmit={handleCreateUser} className="space-y-4 mt-4 overflow-y-auto pr-1 flex-1">
               {/* Account Credentials */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">Username *</label>
                   <input
@@ -512,7 +512,7 @@ export const StaffView: React.FC = () => {
               </div>
 
               {/* Personal Details */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">Full Name</label>
                   <input

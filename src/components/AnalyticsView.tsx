@@ -31,7 +31,7 @@ export const AnalyticsView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-white flex items-center space-x-2">
             <BarChart3 className="w-7 h-7 text-amber-400" />

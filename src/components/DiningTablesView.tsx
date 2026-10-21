@@ -52,7 +52,7 @@ export const DiningTablesView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-white flex items-center space-x-2">
             <Layers className="w-7 h-7 text-amber-400" />
@@ -60,7 +60,7 @@ export const DiningTablesView: React.FC = () => {
           </h1>
           <p className="text-xs text-slate-400 mt-1">Live table occupancy, active orders &amp; dining layout</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
           <button
             onClick={loadData}
             className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"

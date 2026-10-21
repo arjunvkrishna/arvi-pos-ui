@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Store, User as UserIcon, LogOut, ChevronDown, Coffee, Settings, ShieldCheck } from 'lucide-react';
+import { Store, User as UserIcon, LogOut, ChevronDown, Coffee, Settings, ShieldCheck, Menu, X } from 'lucide-react';
 import { UserProfileModal } from './UserProfileModal';
 
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isMobileMenuOpen?: boolean;
+  onToggleMobileMenu?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, isMobileMenuOpen, onToggleMobileMenu }) => {
   const { user, outlets, activeOutlet, switchOutlet, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -39,95 +41,118 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
     user?.role === 'CAFE_ADMIN' ||
     user?.role === 'GENERAL_MANAGER';
 
+  const [isOutletDropdownOpen, setIsOutletDropdownOpen] = useState(false);
+
   return (
     <>
-      <header className="h-16 glass-panel border-b border-slate-800/80 px-4 flex items-center justify-between sticky top-0 z-30">
-        {/* Brand & Logo */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 overflow-hidden border border-amber-400/30">
+      <header className="h-16 glass-panel border-b border-slate-800/80 px-2 sm:px-4 flex items-center justify-between sticky top-0 z-30">
+        {/* Brand & Mobile Hamburger */}
+        <div className="flex items-center space-x-1.5 sm:space-x-3 min-w-0">
+          {onToggleMobileMenu && (
+            <button
+              onClick={onToggleMobileMenu}
+              aria-label="Toggle Navigation Menu"
+              className="md:hidden p-1.5 sm:p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-400 border border-slate-800 transition"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5 text-amber-400" /> : <Menu className="w-5 h-5" />}
+            </button>
+          )}
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 flex-shrink-0 flex items-center justify-center shadow-lg shadow-amber-500/20 overflow-hidden border border-amber-400/30">
             {user?.logoUrl ? (
               <img
                 src={user.logoUrl}
                 alt={user?.tenantName || 'Cafe Logo'}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  // Fallback if image fails to load
                   (e.currentTarget as HTMLElement).style.display = 'none';
                 }}
               />
             ) : (
-              <Coffee className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+              <Coffee className="w-4 h-4 sm:w-6 sm:h-6 text-slate-950 stroke-[2.5]" />
             )}
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-clip-text text-transparent">
+          <div className="min-w-0">
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <span className="font-extrabold text-xs sm:text-lg tracking-tight bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-clip-text text-transparent truncate max-w-[85px] xs:max-w-[120px] sm:max-w-[200px]">
                 {user?.tenantName || 'ARVI POS'}
               </span>
               {user?.role === 'SUPER_ADMIN' && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                <span className="text-[8px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">
                   SaaS Owner
                 </span>
               )}
               {user?.role === 'GENERAL_MANAGER' && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="hidden sm:inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 whitespace-nowrap">
                   Multi-Franchise GM
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate hidden md:block">
               {user?.role === 'SUPER_ADMIN'
                 ? 'Platform Management Console'
                 : user?.role === 'GENERAL_MANAGER'
-                ? 'Multi-Outlet Operations & Governance'
-                : 'Multi-Franchise Cloud POS'}
+                ? 'Multi-Outlet Operations'
+                : 'Cloud POS'}
             </p>
           </div>
         </div>
 
         {/* Middle: Multi-Franchise Outlet Selector */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           {user?.role !== 'SUPER_ADMIN' && outlets.length > 0 && (
-            <div className="relative group">
-              <div className="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl px-3 py-1.5 cursor-pointer transition shadow-sm">
-                <Store className="w-4 h-4 text-amber-400" />
-                <div className="text-left">
-                  <span className="block text-[10px] text-slate-400 uppercase font-semibold tracking-wider">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => canSwitchOutlet && setIsOutletDropdownOpen(!isOutletDropdownOpen)}
+                className="flex items-center space-x-1.5 sm:space-x-2 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl px-2 py-1 sm:px-3 sm:py-1.5 cursor-pointer transition shadow-sm text-left"
+              >
+                <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+                <div className="text-left max-w-[80px] xs:max-w-[110px] sm:max-w-[160px]">
+                  <span className="hidden sm:block text-[9px] text-slate-400 uppercase font-semibold tracking-wider truncate">
                     {canSwitchOutlet ? 'Active Outlet' : 'Branch'}
                   </span>
-                  <span className="text-xs font-bold text-slate-200 flex items-center space-x-1">
-                    <span>{activeOutlet?.name || 'Select Outlet'}</span>
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-200 flex items-center space-x-1 truncate">
+                    <span className="truncate">{activeOutlet?.name || 'Select Outlet'}</span>
                     {activeOutlet?.code && (
-                      <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1 rounded ml-1 font-mono">
+                      <span className="hidden xs:inline-block text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded ml-1 font-mono">
                         {activeOutlet.code}
                       </span>
                     )}
                   </span>
                 </div>
                 {outlets.length > 1 && canSwitchOutlet && (
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                  <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
                 )}
-              </div>
+              </button>
 
               {/* Dropdown menu for multi-outlet switching */}
-              {outlets.length > 1 && canSwitchOutlet && (
-                <div className="absolute left-0 mt-1 w-56 glass-panel rounded-xl shadow-2xl py-1 hidden group-hover:block z-50 border border-slate-700">
-                  <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
-                    Switch Franchise Outlet
+              {outlets.length > 1 && canSwitchOutlet && isOutletDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsOutletDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 sm:left-0 mt-1 w-52 sm:w-56 glass-panel bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 z-50">
+                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
+                      Switch Franchise Outlet
+                    </div>
+                    {outlets.map((outlet) => (
+                      <button
+                        key={outlet.id}
+                        onClick={() => {
+                          switchOutlet(outlet.id);
+                          setIsOutletDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-amber-500/10 transition ${
+                          activeOutlet?.id === outlet.id ? 'text-amber-400 font-bold bg-amber-500/5' : 'text-slate-300'
+                        }`}
+                      >
+                        <span className="truncate mr-2">{outlet.name}</span>
+                        <span className="text-[10px] text-slate-500 font-mono shrink-0">{outlet.code}</span>
+                      </button>
+                    ))}
                   </div>
-                  {outlets.map((outlet) => (
-                    <button
-                      key={outlet.id}
-                      onClick={() => switchOutlet(outlet.id)}
-                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-amber-500/10 transition ${
-                        activeOutlet?.id === outlet.id ? 'text-amber-400 font-bold bg-amber-500/5' : 'text-slate-300'
-                      }`}
-                    >
-                      <span>{outlet.name}</span>
-                      <span className="text-[10px] text-slate-500 font-mono">{outlet.code}</span>
-                    </button>
-                  ))}
-                </div>
+                </>
               )}
             </div>
           )}

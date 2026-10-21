@@ -27,8 +27,8 @@ export const LoginModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md glass-panel bg-slate-900 border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-md glass-panel bg-slate-900 border-slate-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-y-auto max-h-[95vh]">
         {/* Subtle accent glow */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>

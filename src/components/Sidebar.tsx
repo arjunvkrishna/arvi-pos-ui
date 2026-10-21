@@ -16,14 +16,18 @@ import {
   CookingPot,
   Globe,
   Building2,
+  X,
+  Coffee,
 } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isMobileOpen, onCloseMobile }) => {
   const { user } = useAuth();
   const role = user?.role || 'EMPLOYEE';
 
@@ -158,50 +162,105 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     return true;
   });
 
-  return (
-    <aside className="w-64 glass-panel border-r border-slate-800/80 min-h-[calc(100vh-4rem)] flex flex-col justify-between py-4 px-3">
-      <div className="space-y-1">
-        <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-          Navigation
-        </div>
-        {visibleItems.map((item) => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs transition duration-150 ${
-                isActive
-                  ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-400 border border-amber-500/30 font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <span className={isActive ? 'text-amber-400' : 'text-slate-400'}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </div>
-              {item.badge && (
-                <span
-                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                    item.badge === 'LIVE'
-                      ? 'bg-rose-500/20 text-rose-300 animate-pulse border border-rose-500/30'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+  const renderNavButtons = (isMobile: boolean = false) => (
+    <div className="space-y-1">
+      <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        Navigation
       </div>
+      {visibleItems.map((item) => {
+        const isActive = activeTab === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => {
+              setActiveTab(item.id);
+              if (isMobile && onCloseMobile) {
+                onCloseMobile();
+              }
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs transition duration-150 ${
+              isActive
+                ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-400 border border-amber-500/30 font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              <span className={isActive ? 'text-amber-400' : 'text-slate-400'}>
+                {item.icon}
+              </span>
+              <span>{item.label}</span>
+            </div>
+            {item.badge && (
+              <span
+                className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                  item.badge === 'LIVE'
+                    ? 'bg-rose-500/20 text-rose-300 animate-pulse border border-rose-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                }`}
+              >
+                {item.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
 
-      <div className="pt-4 border-t border-slate-800/80 px-3 text-center">
-        <p className="text-[11px] text-slate-500">ARVI POS Platform v1.0.0</p>
-        <p className="text-[10px] text-slate-600">Enterprise Cloud Architecture</p>
-      </div>
-    </aside>
+  return (
+    <>
+      {/* Desktop Sidebar (Pinned Left on md+ screens) */}
+      <aside className="hidden md:flex w-64 glass-panel border-r border-slate-800/80 min-h-[calc(100vh-4rem)] flex-col justify-between py-4 px-3 flex-shrink-0">
+        {renderNavButtons(false)}
+        <div className="pt-4 border-t border-slate-800/80 px-3 text-center">
+          <p className="text-[11px] text-slate-500 font-mono">ARVI POS v1.0.0</p>
+          <p className="text-[10px] text-slate-600">Enterprise Cloud</p>
+        </div>
+      </aside>
+
+      {/* Mobile Sliding Drawer */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity animate-fade-in"
+            onClick={onCloseMobile}
+          />
+          {/* Sliding Panel */}
+          <div className="relative w-72 max-w-[85vw] bg-slate-900 border-r border-slate-800 flex flex-col justify-between p-4 z-10 shadow-2xl overflow-y-auto">
+            <div>
+              <div className="flex items-center justify-between pb-4 mb-3 border-b border-slate-800">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                    <Coffee className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-sm text-slate-100">
+                      {user?.tenantName || 'ARVI POS'}
+                    </span>
+                    <span className="block text-[10px] text-amber-400 font-semibold uppercase tracking-wider">
+                      {user?.role}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={onCloseMobile}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {renderNavButtons(true)}
+            </div>
+
+            <div className="pt-4 mt-6 border-t border-slate-800 text-center">
+              <p className="text-[11px] text-slate-400 font-medium">ARVI POS Terminal</p>
+              <p className="text-[10px] text-slate-600">Mobile Responsive Edition</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

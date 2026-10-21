@@ -71,8 +71,81 @@ export const BillsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Bills Table */}
-      <div className="glass-panel rounded-2xl border-slate-800/80 overflow-hidden shadow-xl">
+      {/* Mobile Bills Card View (Small Screens) */}
+      <div className="space-y-3 md:hidden">
+        {filteredBills.length === 0 ? (
+          <div className="glass-panel p-8 text-center text-slate-500 rounded-2xl border-slate-800">
+            No matching bills found
+          </div>
+        ) : (
+          filteredBills.map((bill) => (
+            <div
+              key={bill.id}
+              className="glass-panel p-4 rounded-2xl border-slate-800/90 space-y-3 shadow-lg"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                <div className="flex items-center space-x-2">
+                  <span className="font-mono font-bold text-amber-400 text-sm">#{bill.billNumber}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    bill.status === 'PAID'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                  }`}>
+                    {bill.status}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {bill.createdAt ? new Date(bill.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Table / Order</span>
+                  <span className="font-bold text-white">{bill.tableNumber || bill.takeawayToken || 'Counter'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Mode</span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">
+                    {bill.paymentMode}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-400 block text-[10px]">Net Total</span>
+                  <span className="font-mono font-extrabold text-emerald-400 text-base">
+                    ₹{bill.netAmount?.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
+                <span className="text-[11px] text-slate-400">
+                  {bill.items?.length || 0} item{(bill.items?.length || 0) > 1 ? 's' : ''} • {bill.customerName || 'Walk-in'}
+                </span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setSelectedBill(bill)}
+                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700 transition"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View</span>
+                  </button>
+                  <button
+                    onClick={() => handleReprint(bill.id)}
+                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold hover:bg-amber-500/30 transition"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Reprint</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Bills Table */}
+      <div className="hidden md:block glass-panel rounded-2xl border-slate-800/80 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-semibold">
