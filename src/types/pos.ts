@@ -1,4 +1,4 @@
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'CAFE_ADMIN' | 'MANAGER' | 'EMPLOYEE' | 'KITCHEN';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'CAFE_ADMIN' | 'GENERAL_MANAGER' | 'MANAGER' | 'CASHIER' | 'CAPTAIN' | 'EMPLOYEE' | 'KITCHEN';
 
 export interface User {
   id: number;
@@ -6,16 +6,46 @@ export interface User {
   role: Role;
   employeeId?: number;
   employeeName?: string;
+  canBill?: boolean;
   canTakeOrders?: boolean;
   canManageInventory?: boolean;
+  canManageExpenses?: boolean;
+  canViewReports?: boolean;
   mustChangePassword?: boolean;
   tenantId?: number;
   tenantName?: string;
   tenantCode?: string;
+  logoUrl?: string;
   outletId?: number;
   outletName?: string;
   outletCode?: string;
   active?: boolean;
+}
+
+export interface UserProfile {
+  userId: number;
+  username: string;
+  role: Role;
+  active: boolean;
+  mustChangePassword?: boolean;
+  canBill?: boolean;
+  canTakeOrders?: boolean;
+  canManageInventory?: boolean;
+  canManageExpenses?: boolean;
+  canViewReports?: boolean;
+  tenantId?: number;
+  tenantName?: string;
+  outletId?: number;
+  outletName?: string;
+  cafeLogoUrl?: string;
+  accountCreatedAt?: string;
+  employeeId?: number;
+  employeeName?: string;
+  phone?: string;
+  email?: string;
+  department?: string;
+  designation?: string;
+  address?: string;
 }
 
 export interface Tenant {
@@ -25,6 +55,8 @@ export interface Tenant {
   contactEmail?: string;
   contactPhone?: string;
   address?: string;
+  gstNumber?: string;
+  logoUrl?: string;
   subscriptionPlan: string;
   status: string;
   maxOutlets: number;

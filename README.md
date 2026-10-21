@@ -34,6 +34,24 @@ Designed for touchscreens, desktop terminals, and mobile devices, providing real
   - Comprehensive invoice archive with search, date filters, receipt re-printing, and order cancellation.
 
 ### 3. Back of House & Operations
+- **User Profile & Password Management**:
+  - Top navigation user profile modal with editable contact details (Name, Phone, Email, Address).
+  - Secure self-service password reset modal with current password confirmation and strength validation.
+- **Brand Identity & Logo Customization**:
+  - Live cafe brand configuration card in Settings.
+  - Image upload with instant data URL preview, direct URL input, and automatic top navbar / receipt branding sync.
+  - GSTIN, official contact information, and business address configuration.
+- **Multi-Franchise General Manager & Outlet Branch Managers**:
+  - **General Manager (`GENERAL_MANAGER`)**: Second in command after Admin; exercises cross-outlet governance, oversees branch managers, combined inventory stock, cross-branch expenses, and switches between outlets via the top navbar switcher.
+  - **Single-Outlet Manager (`MANAGER`)**: Assigned specifically to an outlet and restricted strictly to managing staff, stock, and expenses for that location.
+- **Granular RBAC Staff Creation & Delegation**:
+  - Fine-grained permission checkboxes when creating or editing staff:
+    - `canBill` (POS billing and checkout)
+    - `canTakeOrders` (Captain mode & table ordering)
+    - `canManageInventory` (Stock audits and inward supply invoices)
+    - `canManageExpenses` (Expense vouchers and petty cash tracking)
+    - `canViewReports` (Revenue and P&L analytics)
+  - Admin/GM remote staff password reset functionality.
 - **Menu & Catalog Editor**:
   - Category and product management, pricing adjustments, veg/non-veg flags, and stock availability toggles.
 - **Inventory & Supply Management**:
@@ -42,8 +60,6 @@ Designed for touchscreens, desktop terminals, and mobile devices, providing real
   - Shift opening float declaration, mid-day cash adjustments, and end-of-day register closure reconciliation.
 - **Expense Tracker**:
   - Branch-level operational expense recording and expense category breakdowns.
-- **Staff & Access Control**:
-  - Team member management with role-based access control (`ADMIN`, `MANAGER`, `EMPLOYEE`, `KITCHEN`).
 - **Settings & Hardware**:
   - LAN thermal printer configuration (Bill, Kitchen KOT, and Juice KOT endpoints).
 - **Contactless Customer QR Menu**:

@@ -11,6 +11,8 @@ interface AuthContextType {
   logout: () => void;
   switchOutlet: (outletId: number) => void;
   refreshOutlets: () => Promise<void>;
+  updateUser: (updated: Partial<User>) => void;
+  updateTenantLogo: (logoUrl: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,12 +80,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       role: data.role,
       employeeId: data.employeeId,
       employeeName: data.employeeName,
+      canBill: data.canBill,
       canTakeOrders: data.canTakeOrders,
       canManageInventory: data.canManageInventory,
+      canManageExpenses: data.canManageExpenses,
+      canViewReports: data.canViewReports,
       mustChangePassword: data.mustChangePassword,
       tenantId: data.tenantId,
       tenantName: data.tenantName,
       tenantCode: data.tenantCode,
+      logoUrl: data.logoUrl,
       outletId: data.outletId,
       outletName: data.outletName,
       outletCode: data.outletCode,
@@ -136,6 +142,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUser = (updated: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const next = { ...prev, ...updated };
+      localStorage.setItem('pos_user', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const updateTenantLogo = (logoUrl: string) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const next = { ...prev, logoUrl };
+      localStorage.setItem('pos_user', JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -147,6 +171,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout,
         switchOutlet,
         refreshOutlets: fetchOutlets,
+        updateUser,
+        updateTenantLogo,
       }}
     >
       {children}

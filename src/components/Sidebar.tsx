@@ -31,9 +31,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     id: string;
     label: string;
     icon: React.ReactNode;
-    roles: string[];
+    roles?: string[];
+    permissionCheck?: (u: typeof user) => boolean;
     badge?: string;
   }
+
+  const isElevated = role === 'ADMIN' || role === 'CAFE_ADMIN' || role === 'GENERAL_MANAGER';
 
   const navItems: NavItem[] = [
     // Super Admin Views
@@ -55,26 +58,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       id: 'pos',
       label: 'POS Billing',
       icon: <ShoppingCart className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER', 'EMPLOYEE'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || u?.canBill !== false,
     },
     {
       id: 'tables',
       label: 'Dining Tables',
       icon: <Layers className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER', 'EMPLOYEE'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || u?.canTakeOrders !== false,
     },
     {
       id: 'kds',
       label: 'Kitchen Display',
       icon: <CookingPot className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER', 'EMPLOYEE', 'KITCHEN'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || role === 'KITCHEN' || u?.canTakeOrders !== false,
       badge: 'LIVE',
     },
     {
       id: 'bills',
       label: 'Orders & Bills',
       icon: <Receipt className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER', 'EMPLOYEE'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || u?.canBill !== false || u?.canTakeOrders !== false,
     },
 
     // Management & Resources
@@ -82,31 +85,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       id: 'menu',
       label: 'Menu Catalog',
       icon: <UtensilsCrossed className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER'],
+      roles: ['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER', 'MANAGER'],
     },
     {
       id: 'inventory',
       label: 'Inventory Stock',
       icon: <Package className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || u?.canManageInventory === true,
     },
     {
       id: 'shifts',
       label: 'Cashier Shifts',
       icon: <Clock className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER', 'EMPLOYEE'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || u?.canBill !== false,
     },
     {
       id: 'expenses',
       label: 'Expenses',
       icon: <Wallet className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || u?.canManageExpenses === true,
     },
     {
       id: 'staff',
       label: 'Staff & Roles',
       icon: <Users className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER'],
+      roles: ['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER', 'MANAGER'],
     },
 
     // Multi-Franchise & Analytics
@@ -114,32 +117,46 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       id: 'outlets',
       label: 'Franchise Outlets',
       icon: <Store className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN'],
+      roles: ['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER'],
       badge: 'Multi-Store',
     },
     {
       id: 'analytics',
       label: 'Analytics & P&L',
       icon: <BarChart3 className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER'],
+      permissionCheck: (u) => isElevated || role === 'MANAGER' || u?.canViewReports === true,
     },
 
     // Settings
     {
       id: 'settings',
-      label: 'Hardware & Printers',
+      label: 'Brand & Hardware',
       icon: <Settings className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER'],
+      roles: ['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER', 'MANAGER'],
     },
     {
       id: 'customer-menu',
       label: 'Customer QR Menu',
       icon: <Globe className="w-5 h-5" />,
-      roles: ['ADMIN', 'CAFE_ADMIN', 'MANAGER'],
+      roles: ['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER', 'MANAGER'],
     },
   ];
 
-  const visibleItems = navItems.filter((item) => item.roles.includes(role));
+  const visibleItems = navItems.filter((item) => {
+    if (role === 'SUPER_ADMIN') {
+      return item.roles?.includes('SUPER_ADMIN');
+    }
+    if (item.roles?.includes('SUPER_ADMIN')) {
+      return false;
+    }
+    if (item.permissionCheck) {
+      return item.permissionCheck(user);
+    }
+    if (item.roles) {
+      return item.roles.includes(role);
+    }
+    return true;
+  });
 
   return (
     <aside className="w-64 glass-panel border-r border-slate-800/80 min-h-[calc(100vh-4rem)] flex flex-col justify-between py-4 px-3">
