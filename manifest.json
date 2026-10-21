@@ -1,0 +1,77 @@
+{
+  "name": "NERAM Cloud POS",
+  "short_name": "NERAM POS",
+  "description": "Smart, lightning-fast Point of Sale, table ordering, KOT, and cafe management system.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#f59e0b",
+  "background_color": "#0b0f19",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "food", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Table Orders & POS",
+      "short_name": "POS",
+      "description": "Open active tables and take orders",
+      "url": "/#pos",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Bill Log & Settlement",
+      "short_name": "Bills",
+      "description": "View daily bills and settlements",
+      "url": "/#bills",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Menu & Pricing",
+      "short_name": "Menu",
+      "description": "Manage cafe menu, dishes, and pricing",
+      "url": "/#menu",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Inventory & Stock",
+      "short_name": "Stock",
+      "description": "Check inventory levels and suppliers",
+      "url": "/#inventory",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "neram-pos-frontend-tools",
+  "private": true,
+  "description": "Build-time tools only. Nothing in this folder is shipped in the image.",
+  "scripts": {
+    "build:css": "bash build-css.sh"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17",
+    "acorn": "8.14.0",
+    "eslint-scope": "8.2.0",
+    "esquery": "1.6.0"
+  }
+}

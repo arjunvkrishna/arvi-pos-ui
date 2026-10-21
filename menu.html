@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Menu - NERAM Cafe & Restaurant</title>
+  <link rel="icon" type="image/png" href="logo-05.png" />
+  <link rel="apple-touch-icon" href="logo-05.png" />
+  <meta name="theme-color" content="#070a12" />
+  <meta name="description" content="Explore our handcrafted cafe menu, hot coffees, refreshing cold beverages, artisan burgers, sandwiches, and delights at NERAM." />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <!-- Served from this site (no outside hosts) -->
+  <link rel="preload" href="vendor/fontawesome-6.5.1/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="vendor/fontawesome-6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="vendor/outfit-1/outfit.css" />
+
+  <style>
+    * {
+      font-family: 'Outfit', sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: radial-gradient(circle at 10% 15%, rgba(245, 158, 11, 0.07) 0%, transparent 35%),
+                  radial-gradient(circle at 90% 85%, rgba(217, 119, 6, 0.05) 0%, transparent 40%),
+                  #070a12;
+      color: #f3f4f6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .glass-header {
+      background: rgba(11, 15, 25, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+    }
+    .glass-sticky-nav {
+      background: rgba(7, 10, 18, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .menu-card {
+      background: rgba(17, 24, 39, 0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .menu-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(245, 158, 11, 0.35);
+      box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.08);
+    }
+    .category-pill {
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .category-pill.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #070a12;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+      border-color: transparent;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* FSSAI Veg / Non-Veg Badges */
+    .fssai-symbol {
+      width: 15px;
+      height: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .fssai-veg {
+      border: 1.5px solid #10b981;
+    }
+    .fssai-veg-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #10b981;
+    }
+    .fssai-nonveg {
+      border: 1.5px solid #ef4444;
+    }
+    .fssai-nonveg-triangle {
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 7px solid #ef4444;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .skeleton-box {
+      background: linear-gradient(90deg, rgba(31,41,55,0.4) 0%, rgba(55,65,81,0.5) 50%, rgba(31,41,55,0.4) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+  <!-- Tailwind CSS, compiled ahead of time by tools/build-css.sh -->
+  <link rel="stylesheet" href="tailwind.css?v=2.14.2" />
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- ================= TOP HERO / BRAND HEADER ================= -->
+  <header class="glass-header sticky top-0 z-40 transition-all duration-300 shadow-lg">
+    <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center p-1 bg-amber-500/10 border border-amber-500/20 shadow-md shadow-amber-500/10 flex-shrink-0">
+          <img src="logo-05.png" alt="NERAM Cafe" class="w-full h-full object-contain filter drop-shadow" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-wider text-white">NERAM</h1>
+            <span id="headerStatusBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span> Live Menu
+            </span>
+          </div>
+          <p class="text-xs text-amber-400/90 font-medium">Artisanal Cafe & Bakery</p>
+        </div>
+      </div>
+
+      <!-- Action pill (Item count or in-store notice) -->
+      <div class="text-right hidden sm:block">
+        <span class="text-xs text-gray-400 font-normal">Customer Digital Menu</span>
+        <div class="text-xs font-semibold text-gray-200" id="headerItemCount">Connecting...</div>
+      </div>
+    </div>
+
+    <!-- Header Controls Container (Hidden when menu is disabled) -->
+    <div id="menuHeaderControls" class="transition-all duration-300">
+      <!-- Search & Type Filter Bar -->
+      <div class="max-w-6xl mx-auto px-4 pb-3">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <!-- Search Input -->
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Search coffee, burger, iced tea, sandwich..."
+              class="w-full pl-9 pr-8 py-2 rounded-xl bg-gray-900/90 border border-gray-700/60 text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition shadow-inner"
+              oninput="handleSearch(this.value)"
+            />
+            <button 
+              id="clearSearchBtn" 
+              onclick="clearSearch()" 
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white hidden text-xs">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Veg / Non-Veg Filter Toggle -->
+          <div class="flex items-center gap-1.5 self-start sm:self-auto overflow-x-auto no-scrollbar">
+            <button 
+              id="filter-type-all" 
+              onclick="setTypeFilter('all')" 
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-gray-950 shadow-sm transition">
+              All
+            </button>
+            <button 
+              id="filter-type-veg" 
+              onclick="setTypeFilter('veg')" 
+              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gray-900/80 hover:bg-gray-800 text-gray-300 border border-gray-800 flex items-center gap-1.5 transition">
+              <span class="fssai-symbol fssai-veg"><span class="fssai-veg-dot"></span></span> Veg
+            </button>
+            <button 
+              id="filter-type-nonveg" 
+              onclick="setTypeFilter('nonveg')" 
+              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gray-900/80 hover:bg-gray-800 text-gray-300 border border-gray-800 flex items-center gap-1.5 transition">
+              <span class="fssai-symbol fssai-nonveg"><span class="fssai-nonveg-triangle"></span></span> Non-Veg
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Nav Pills (Scrollable) -->
+      <div class="glass-sticky-nav px-4 py-2 border-t border-gray-800/80">
+        <div class="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar" id="categoryNavContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN MENU CONTAINER ================= -->
+  <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
+
+    <!-- Loading Skeleton View -->
+    <div id="loadingView" class="space-y-8">
+      <div class="space-y-3">
+        <div class="h-6 w-48 rounded skeleton-box"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="h-24 rounded-2xl skeleton-box"></div>
+          <div class="h-24 rounded-2xl skeleton-box"></div>
+          <div class="h-24 rounded-2xl skeleton-box"></div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="h-6 w-56 rounded skeleton-box"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="h-24 rounded-2xl skeleton-box"></div>
+          <div class="h-24 rounded-2xl skeleton-box"></div>
+          <div class="h-24 rounded-2xl skeleton-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu Offline State -->
+    <div id="disabledView" class="hidden text-center py-16 px-4">
+      <div class="max-w-md mx-auto p-8 rounded-3xl glass-header border border-rose-500/30 shadow-2xl space-y-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-2xl shadow-inner">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Menu Access Disabled</h2>
+        <p class="text-sm text-gray-400 leading-relaxed" id="disabledMessage">
+          The public menu is currently disabled by management. Please ask our staff in-store for assistance.
+        </p>
+        <div class="pt-2">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-900 text-rose-400 border border-rose-500/30">
+            <i class="fa-solid fa-ban mr-1.5"></i> Access Restricted
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty Search Results View -->
+    <div id="emptyView" class="hidden text-center py-16 px-4">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-gray-800/80 border border-gray-700 flex items-center justify-center text-gray-400 text-xl mb-3">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <h3 class="text-base font-bold text-white">No items found</h3>
+      <p class="text-xs text-gray-400 mt-1">Try searching with a different keyword or resetting filters.</p>
+      <button onclick="clearSearch()" class="mt-4 px-4 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-gray-950 transition">
+        Reset Search
+      </button>
+    </div>
+
+    <!-- Active Menu List View -->
+    <div id="menuSectionsContainer" class="space-y-10 hidden">
+      <!-- Dynamically generated category sections -->
+    </div>
+
+  </main>
+
+  <!-- Floating Back to Top Button -->
+  <button 
+    id="btnBackToTop" 
+    onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" 
+    class="fixed bottom-6 right-6 w-11 h-11 rounded-full bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold shadow-xl shadow-amber-500/20 flex items-center justify-center transition-all opacity-0 pointer-events-none z-30 transform translate-y-2">
+    <i class="fa-solid fa-arrow-up text-sm"></i>
+  </button>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-gray-800/80 bg-gray-950 py-8 px-4 text-center mt-auto">
+    <div class="max-w-6xl mx-auto space-y-2">
+      <div class="flex items-center justify-center gap-2">
+        <span class="text-sm font-extrabold text-white tracking-widest">NERAM</span>
+        <span class="text-xs text-amber-400">• Cafe & Dining</span>
+      </div>
+      <p class="text-[11px] text-gray-500">
+        Prices are in Indian Rupees (₹). Government taxes as applicable.
+      </p>
+      <p class="text-[10px] text-gray-600">
+        &copy; 2026 NERAM POS System. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <!-- ================= LOGIC SCRIPT ================= -->
+  <script>
+    let rawMenuData = null;
+    let currentSearchTerm = '';
+    let currentTypeFilter = 'all'; // 'all', 'veg', 'nonveg'
+    let activeCategoryId = 'all';
+
+    // Fetch Public Menu on page load
+    document.addEventListener('DOMContentLoaded', fetchPublicMenu);
+
+    // Re-check menu availability when user returns to this tab
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        fetchPublicMenu();
+      }
+    });
+
+    // Auto-sync status periodically (every 30 seconds)
+    setInterval(fetchPublicMenu, 30000);
+
+    // Scroll listener for Back to Top button
+    window.addEventListener('scroll', () => {
+      const btn = document.getElementById('btnBackToTop');
+      if (window.scrollY > 300) {
+        btn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+        btn.classList.add('opacity-100', 'translate-y-0');
+      } else {
+        btn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+        btn.classList.remove('opacity-100', 'translate-y-0');
+      }
+    });
+
+    async function fetchPublicMenu() {
+      try {
+        // Explicitly bypass browser disk cache & fetch fresh state
+        const response = await fetch('/api/public/menu?_t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        // If HTTP 403 or 503 or not OK, the public menu is disabled or unavailable
+        if (response.status === 403 || response.status === 503 || !response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          renderDisabledView(errData.message || 'Public customer menu is currently disabled by management.');
+          return;
+        }
+
+        const data = await response.json();
+        if (!data || data.enabled === false) {
+          renderDisabledView(data ? data.message : 'Public customer menu is currently disabled by management.');
+          return;
+        }
+
+        rawMenuData = data;
+        renderActiveView(data);
+      } catch (err) {
+        console.error('Failed to load menu:', err);
+        renderDisabledView('Public customer menu is currently offline or unreachable.');
+      }
+    }
+
+    function renderDisabledView(message) {
+      document.getElementById('loadingView').classList.add('hidden');
+      document.getElementById('emptyView').classList.add('hidden');
+      document.getElementById('menuSectionsContainer').classList.add('hidden');
+      document.getElementById('menuSectionsContainer').innerHTML = '';
+
+      // Hide search and category bars in header
+      const headerControls = document.getElementById('menuHeaderControls');
+      if (headerControls) headerControls.classList.add('hidden');
+
+      // Update header badges
+      const statusBadge = document.getElementById('headerStatusBadge');
+      if (statusBadge) {
+        statusBadge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30';
+        statusBadge.replaceChildren();
+        const dot = document.createElement('span');
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-400 mr-1';
+        statusBadge.appendChild(dot);
+        statusBadge.appendChild(document.createTextNode(' Offline'));
+      }
+
+      const headerItemCount = document.getElementById('headerItemCount');
+      if (headerItemCount) headerItemCount.textContent = 'Menu Offline';
+
+      // Show disabled notification
+      const disabledView = document.getElementById('disabledView');
+      disabledView.classList.remove('hidden');
+      const msgEl = document.getElementById('disabledMessage');
+      if (msgEl) msgEl.textContent = message || 'Public menu is currently disabled by management.';
+    }
+
+    function renderActiveView(data) {
+      document.getElementById('loadingView').classList.add('hidden');
+      document.getElementById('disabledView').classList.add('hidden');
+
+      // Show header controls
+      const headerControls = document.getElementById('menuHeaderControls');
+      if (headerControls) headerControls.classList.remove('hidden');
+
+      // Update header badges
+      const statusBadge = document.getElementById('headerStatusBadge');
+      if (statusBadge) {
+        statusBadge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20';
+        statusBadge.replaceChildren();
+        const dot = document.createElement('span');
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1';
+        statusBadge.appendChild(dot);
+        statusBadge.appendChild(document.createTextNode(' Live Menu'));
+      }
+
+      renderCategoryPills(data.categories || []);
+      renderMenu(data.categories || []);
+    }
+
+    function sanitizeIconClass(icon) {
+      if (!icon || typeof icon !== 'string') return 'fa-utensils';
+      const clean = icon.trim();
+      // Allow only valid Font Awesome icon class names (e.g., fa-coffee, fa-mug-hot, fa-burger, fa-utensils)
+      if (/^fa-[a-z0-9-]+$/i.test(clean)) {
+        return clean.toLowerCase();
+      }
+      return 'fa-utensils';
+    }
+
+    function sanitizeElementId(id) {
+      return String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+    }
+
+    function renderCategoryPills(categories) {
+      const container = document.getElementById('categoryNavContainer');
+      container.replaceChildren();
+
+      let totalItems = 0;
+      categories.forEach(c => totalItems += (c.items ? c.items.length : 0));
+      
+      const headerItemCount = document.getElementById('headerItemCount');
+      if (headerItemCount) headerItemCount.textContent = `${totalItems} Handcrafted Items`;
+
+      // "All" Pill
+      const allBtn = document.createElement('button');
+      allBtn.className = `category-pill px-3 py-1 rounded-full text-xs font-semibold border border-gray-700 bg-gray-900/90 text-gray-200 hover:text-white ${activeCategoryId === 'all' ? 'active' : ''}`;
+      allBtn.appendChild(document.createTextNode('All '));
+      const allCountSpan = document.createElement('span');
+      allCountSpan.className = 'ml-1 opacity-70';
+      allCountSpan.textContent = `(${totalItems})`;
+      allBtn.appendChild(allCountSpan);
+      allBtn.onclick = () => scrollToCategory('all');
+      container.appendChild(allBtn);
+
+      // Category Pills
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `category-pill px-3 py-1 rounded-full text-xs font-semibold border border-gray-700/80 bg-gray-900/90 text-gray-300 hover:text-white ${activeCategoryId === cat.id ? 'active' : ''}`;
+        btn.setAttribute('data-cat-id', String(cat.id));
+        
+        const iconEl = document.createElement('i');
+        iconEl.className = `fa-solid ${sanitizeIconClass(cat.icon)} mr-1 text-[10px] text-amber-400`;
+        btn.appendChild(iconEl);
+
+        const nameNode = document.createTextNode(cat.name || 'Category');
+        btn.appendChild(nameNode);
+
+        const countSpan = document.createElement('span');
+        countSpan.className = 'ml-1 opacity-70';
+        countSpan.textContent = ` (${cat.items ? cat.items.length : 0})`;
+        btn.appendChild(countSpan);
+
+        btn.onclick = () => scrollToCategory(cat.id);
+        container.appendChild(btn);
+      });
+    }
+
+    function scrollToCategory(catId) {
+      activeCategoryId = catId;
+      const pills = document.querySelectorAll('.category-pill');
+      pills.forEach((p, idx) => {
+        if (catId === 'all' && idx === 0) {
+          p.classList.add('active');
+        } else if (p.getAttribute('data-cat-id') === String(catId)) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+
+      if (catId === 'all') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const safeCatId = sanitizeElementId(catId);
+        const targetSec = document.getElementById(`cat-section-${safeCatId}`);
+        if (targetSec) {
+          const yOffset = -140;
+          const y = targetSec.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }
+    }
+
+    function setTypeFilter(type) {
+      currentTypeFilter = type;
+
+      const btnAll = document.getElementById('filter-type-all');
+      const btnVeg = document.getElementById('filter-type-veg');
+      const btnNonVeg = document.getElementById('filter-type-nonveg');
+
+      [btnAll, btnVeg, btnNonVeg].forEach(b => {
+        b.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900/80 hover:bg-gray-800 text-gray-300 border border-gray-800 flex items-center gap-1.5 transition';
+      });
+
+      if (type === 'all') {
+        btnAll.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-gray-950 shadow-sm transition';
+      } else if (type === 'veg') {
+        btnVeg.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5 transition shadow-sm';
+      } else if (type === 'nonveg') {
+        btnNonVeg.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center gap-1.5 transition shadow-sm';
+      }
+
+      applyFilters();
+    }
+
+    function handleSearch(term) {
+      currentSearchTerm = (term || '').trim().toLowerCase();
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (currentSearchTerm.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+      applyFilters();
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('searchInput');
+      input.value = '';
+      currentSearchTerm = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      applyFilters();
+    }
+
+    function applyFilters() {
+      if (!rawMenuData || !rawMenuData.categories) return;
+
+      const filteredCategories = [];
+      let totalVisible = 0;
+
+      rawMenuData.categories.forEach(cat => {
+        const filteredItems = (cat.items || []).filter(item => {
+          const matchesSearch = !currentSearchTerm || 
+            (item.name && item.name.toLowerCase().includes(currentSearchTerm)) ||
+            (item.description && item.description.toLowerCase().includes(currentSearchTerm));
+
+          let matchesType = true;
+          if (currentTypeFilter === 'veg') matchesType = (item.isVeg === true);
+          if (currentTypeFilter === 'nonveg') matchesType = (item.isVeg === false);
+
+          return matchesSearch && matchesType;
+        });
+
+        if (filteredItems.length > 0) {
+          filteredCategories.push({
+            ...cat,
+            items: filteredItems
+          });
+          totalVisible += filteredItems.length;
+        }
+      });
+
+      renderMenu(filteredCategories, totalVisible);
+    }
+
+    function renderMenu(categories, totalVisible = null) {
+      const container = document.getElementById('menuSectionsContainer');
+      const emptyView = document.getElementById('emptyView');
+
+      container.replaceChildren();
+
+      if (categories.length === 0) {
+        container.classList.add('hidden');
+        emptyView.classList.remove('hidden');
+        return;
+      }
+
+      emptyView.classList.add('hidden');
+      container.classList.remove('hidden');
+
+      categories.forEach(cat => {
+        const safeCatId = sanitizeElementId(cat.id);
+        const section = document.createElement('section');
+        section.id = `cat-section-${safeCatId}`;
+        section.className = 'space-y-3.5 scroll-mt-36';
+
+        // Section header
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'flex items-center justify-between border-b border-gray-800 pb-2';
+
+        const titleGroup = document.createElement('div');
+        titleGroup.className = 'flex items-center gap-2.5';
+
+        const iconBox = document.createElement('div');
+        iconBox.className = 'w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xs';
+        const iconEl = document.createElement('i');
+        iconEl.className = `fa-solid ${sanitizeIconClass(cat.icon)}`;
+        iconBox.appendChild(iconEl);
+
+        const titleEl = document.createElement('h2');
+        titleEl.className = 'text-base sm:text-lg font-bold text-white tracking-wide';
+        titleEl.textContent = cat.name || '';
+
+        titleGroup.appendChild(iconBox);
+        titleGroup.appendChild(titleEl);
+
+        const countBadge = document.createElement('span');
+        countBadge.className = 'text-xs text-gray-400 font-medium';
+        countBadge.textContent = `${cat.items ? cat.items.length : 0} items`;
+
+        headerDiv.appendChild(titleGroup);
+        headerDiv.appendChild(countBadge);
+        section.appendChild(headerDiv);
+
+        // Items grid
+        const itemsGrid = document.createElement('div');
+        itemsGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5';
+        itemsGrid.id = `cat-items-${safeCatId}`;
+        section.appendChild(itemsGrid);
+
+        (cat.items || []).forEach(item => {
+          const card = document.createElement('div');
+          const isSoldOut = (item.isAvailable === false);
+          card.className = `menu-card p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between relative ${isSoldOut ? 'opacity-60' : ''}`;
+
+          const topContent = document.createElement('div');
+
+          const headerRow = document.createElement('div');
+          headerRow.className = 'flex items-start justify-between gap-2';
+
+          const titleRow = document.createElement('div');
+          titleRow.className = 'flex items-center gap-1.5';
+
+          // FSSAI Veg / Non-Veg symbol
+          const fssaiSymbol = document.createElement('span');
+          fssaiSymbol.className = item.isVeg ? 'fssai-symbol fssai-veg' : 'fssai-symbol fssai-nonveg';
+          fssaiSymbol.title = item.isVeg ? 'Vegetarian' : 'Non-Vegetarian';
+          const dotOrTri = document.createElement('span');
+          dotOrTri.className = item.isVeg ? 'fssai-veg-dot' : 'fssai-nonveg-triangle';
+          fssaiSymbol.appendChild(dotOrTri);
+          titleRow.appendChild(fssaiSymbol);
+
+          const itemName = document.createElement('h3');
+          itemName.className = 'text-xs sm:text-sm font-semibold text-white tracking-wide';
+          itemName.textContent = item.name || '';
+          titleRow.appendChild(itemName);
+
+          headerRow.appendChild(titleRow);
+
+          if (isSoldOut) {
+            const soldOutBadge = document.createElement('span');
+            soldOutBadge.className = 'inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 uppercase tracking-wider';
+            soldOutBadge.textContent = 'Sold Out';
+            headerRow.appendChild(soldOutBadge);
+          }
+
+          topContent.appendChild(headerRow);
+
+          if (item.description && item.description.trim()) {
+            const descEl = document.createElement('p');
+            descEl.className = 'text-[11px] sm:text-xs text-gray-400 line-clamp-2 leading-relaxed mt-1';
+            descEl.textContent = item.description.trim();
+            topContent.appendChild(descEl);
+          }
+
+          card.appendChild(topContent);
+
+          // Bottom Price Row
+          const priceRow = document.createElement('div');
+          priceRow.className = 'flex items-center justify-between pt-2.5 mt-2 border-t border-gray-800/60';
+
+          const priceLabel = document.createElement('span');
+          priceLabel.className = 'text-xs font-semibold text-gray-400';
+          priceLabel.textContent = 'Price';
+
+          const formattedPrice = Number(item.price || 0).toFixed(2).replace(/\.00$/, '');
+          const priceVal = document.createElement('span');
+          priceVal.className = 'text-sm sm:text-base font-bold text-amber-400';
+          priceVal.textContent = `₹${formattedPrice}`;
+
+          priceRow.appendChild(priceLabel);
+          priceRow.appendChild(priceVal);
+          card.appendChild(priceRow);
+
+          itemsGrid.appendChild(card);
+        });
+
+        container.appendChild(section);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
