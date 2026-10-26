@@ -1,9 +1,22 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Coffee, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
+import { Coffee, Lock, User, AlertCircle, ArrowRight, Store } from 'lucide-react';
+
+const CAFE_CODE_KEY = 'pos_cafe_code';
+
+const initialCafeCode = (): string => {
+  const fromUrl = new URLSearchParams(window.location.search).get('cafe');
+  if (fromUrl) return fromUrl;
+  try {
+    return localStorage.getItem(CAFE_CODE_KEY) || '';
+  } catch {
+    return '';
+  }
+};
 
 export const LoginModal: React.FC = () => {
   const { login } = useAuth();
+  const [cafeCode, setCafeCode] = useState(initialCafeCode);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +31,12 @@ export const LoginModal: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await login(username.trim(), password);
+      await login(username.trim(), password, cafeCode.trim().toLowerCase());
+      try {
+        localStorage.setItem(CAFE_CODE_KEY, cafeCode.trim().toLowerCase());
+      } catch {
+        /* remembering the cafe code is optional */
+      }
     } catch (err: any) {
       setError(err.message || 'Invalid username or password');
     } finally {
@@ -50,13 +68,29 @@ export const LoginModal: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Cafe code</label>
+            <div className="relative">
+              <Store className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+              <input
+                type="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder="e.g. bluedoor (leave empty for platform owner)"
+                value={cafeCode}
+                onChange={(e) => setCafeCode(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition font-mono"
+              />
+            </div>
+          </div>
+
+          <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1.5">Username</label>
             <div className="relative">
               <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
               <input
                 type="text"
                 required
-                placeholder="superadmin, admin, or staff username"
+                placeholder="your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition font-mono"
@@ -91,7 +125,7 @@ export const LoginModal: React.FC = () => {
 
         <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
           <p className="text-[11px] text-slate-500">
-            For SaaS platform administration, log in as <span className="text-purple-400 font-mono">superadmin</span>.
+            For SaaS platform administration, leave the cafe code empty and log in as <span className="text-purple-400 font-mono">superadmin</span>.
           </p>
         </div>
       </div>

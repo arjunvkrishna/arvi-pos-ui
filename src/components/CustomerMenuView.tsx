@@ -13,7 +13,11 @@ export const CustomerMenuView: React.FC = () => {
   useEffect(() => {
     const fetchPublicMenu = async () => {
       try {
-        const res = await fetch('/api/public/menu').then(r => r.json()).catch(() => null);
+        // Each cafe has its own menu: the QR link names it (/menu?cafe=<code>).
+        const cafe = new URLSearchParams(window.location.search).get('cafe');
+        const res = cafe
+          ? await fetch(`/api/public/${encodeURIComponent(cafe)}/menu`).then(r => r.json()).catch(() => null)
+          : null;
         if (res && res.categories && res.items) {
           setCategories(res.categories);
           setItems(res.items);

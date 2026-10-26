@@ -319,7 +319,13 @@
     async function fetchPublicMenu() {
       try {
         // Explicitly bypass browser disk cache & fetch fresh state
-        const response = await fetch('/api/public/menu?_t=' + Date.now(), {
+        // Each cafe has its own menu: the QR link names it (/menu?cafe=<code>).
+        const cafe = new URLSearchParams(window.location.search).get('cafe');
+        if (!cafe) {
+          renderDisabledView('This menu link is incomplete. Please scan the QR code at your table again.');
+          return;
+        }
+        const response = await fetch('/api/public/' + encodeURIComponent(cafe) + '/menu?_t=' + Date.now(), {
           cache: 'no-store',
           headers: { 'Accept': 'application/json' }
         });
@@ -338,11 +344,38 @@
         }
 
         rawMenuData = data;
+        applyCafeIdentity(data);
         renderActiveView(data);
       } catch (err) {
         console.error('Failed to load menu:', err);
         renderDisabledView('Public customer menu is currently offline or unreachable.');
       }
+    }
+
+    // Shows this cafe's own name, tagline and logo (each cafe has its own; nothing is shared).
+    function applyCafeIdentity(data) {
+      try {
+        const h1 = document.querySelector('h1');
+        if (data.cafeName) {
+          if (h1) h1.textContent = data.cafeName;
+          document.title = data.cafeName + ' - Menu';
+        }
+        if (h1 && data.tagline && !document.getElementById('cafeTagline')) {
+          const p = document.createElement('p');
+          p.id = 'cafeTagline';
+          p.className = 'text-xs text-slate-400 mt-0.5';
+          p.textContent = data.tagline;
+          h1.insertAdjacentElement('afterend', p);
+        }
+        if (h1 && data.logoUrl && data.logoUrl.startsWith('/api/public/') && !document.getElementById('cafeLogo')) {
+          const img = document.createElement('img');
+          img.id = 'cafeLogo';
+          img.src = data.logoUrl;
+          img.alt = '';
+          img.className = 'h-10 w-10 object-contain rounded-lg mr-2 inline-block align-middle';
+          h1.insertAdjacentElement('beforebegin', img);
+        }
+      } catch (e) { /* branding is optional */ }
     }
 
     function renderDisabledView(message) {

@@ -112,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, isMobil
                     {canSwitchOutlet ? 'Active Outlet' : 'Branch'}
                   </span>
                   <span className="text-[11px] sm:text-xs font-bold text-slate-200 flex items-center space-x-1 truncate">
-                    <span className="truncate">{activeOutlet?.name || 'Select Outlet'}</span>
+                    <span className="truncate">{activeOutlet?.name || (canSwitchOutlet ? 'All branches' : 'Select Outlet')}</span>
                     {activeOutlet?.code && (
                       <span className="hidden xs:inline-block text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded ml-1 font-mono">
                         {activeOutlet.code}
@@ -136,6 +136,17 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, isMobil
                     <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
                       Switch Franchise Outlet
                     </div>
+                    <button
+                      onClick={() => {
+                        switchOutlet(null);
+                        setIsOutletDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-amber-500/10 transition ${
+                        !activeOutlet ? 'text-amber-400 font-bold bg-amber-500/5' : 'text-slate-300'
+                      }`}
+                    >
+                      <span className="truncate mr-2">All branches</span>
+                    </button>
                     {outlets.map((outlet) => (
                       <button
                         key={outlet.id}

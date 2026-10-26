@@ -11,6 +11,9 @@ export interface User {
   canManageInventory?: boolean;
   canManageExpenses?: boolean;
   canViewReports?: boolean;
+  canPrintBill?: boolean;
+  canManageMenu?: boolean;
+  canManageSettings?: boolean;
   mustChangePassword?: boolean;
   tenantId?: number;
   tenantName?: string;
@@ -103,6 +106,10 @@ export interface MenuItem {
   active: boolean;
   tenantId?: number;
   outletId?: number;
+  /** Cafe-wide price/availability; price/isAvailable above are what the active branch sells. */
+  basePrice?: number;
+  baseAvailable?: boolean;
+  branchOverride?: boolean;
 }
 
 export type OrderType = 'TABLE' | 'OUTDOOR' | 'TAKEAWAY';

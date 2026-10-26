@@ -28,6 +28,8 @@ import {
 
 export const StaffView: React.FC = () => {
   const { user: currentUser, outlets } = useAuth();
+  // You can only hand out rights you hold: owner and main manager always hold the menu right.
+  const mayGrantMenu = ['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER'].includes(currentUser?.role || '') || !!currentUser?.canManageMenu;
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -51,6 +53,8 @@ export const StaffView: React.FC = () => {
   const [canManageInventory, setCanManageInventory] = useState(false);
   const [canManageExpenses, setCanManageExpenses] = useState(false);
   const [canViewReports, setCanViewReports] = useState(false);
+  const [canManageMenu, setCanManageMenu] = useState(false);
+  const [canManageSettings, setCanManageSettings] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states for Edit Permissions
@@ -61,6 +65,8 @@ export const StaffView: React.FC = () => {
   const [editCanManageInventory, setEditCanManageInventory] = useState(false);
   const [editCanManageExpenses, setEditCanManageExpenses] = useState(false);
   const [editCanViewReports, setEditCanViewReports] = useState(false);
+  const [editCanManageMenu, setEditCanManageMenu] = useState(false);
+  const [editCanManageSettings, setEditCanManageSettings] = useState(false);
 
   // Form state for Reset Password
   const [newStaffPassword, setNewStaffPassword] = useState('');
@@ -164,6 +170,8 @@ export const StaffView: React.FC = () => {
         canManageInventory,
         canManageExpenses,
         canViewReports,
+        canManageMenu,
+        canManageSettings,
       });
       setShowCreateModal(false);
       setFeedback({ type: 'success', text: `Staff user '${username}' registered successfully!` });
@@ -184,6 +192,8 @@ export const StaffView: React.FC = () => {
     setEditCanManageInventory(Boolean(u.canManageInventory));
     setEditCanManageExpenses(Boolean(u.canManageExpenses));
     setEditCanViewReports(Boolean(u.canViewReports));
+    setEditCanManageMenu(Boolean(u.canManageMenu));
+    setEditCanManageSettings(Boolean(u.canManageSettings));
     setShowEditModal(true);
     setFeedback(null);
   };
@@ -202,6 +212,8 @@ export const StaffView: React.FC = () => {
         canManageInventory: editCanManageInventory,
         canManageExpenses: editCanManageExpenses,
         canViewReports: editCanViewReports,
+        canManageMenu: editCanManageMenu,
+        canManageSettings: editCanManageSettings,
       });
       setShowEditModal(false);
       setFeedback({ type: 'success', text: `Permissions for ${selectedUser.username} updated!` });
@@ -643,6 +655,27 @@ export const StaffView: React.FC = () => {
                   <BarChart3 className="w-3.5 h-3.5 text-blue-400" />
                   <span>Analytics Reports &amp; Financial P&amp;L (canViewReports)</span>
                 </label>
+
+                <label className="flex items-center space-x-2 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={canManageMenu}
+                    disabled={!mayGrantMenu}
+                    onChange={(e) => setCanManageMenu(e.target.checked)}
+                    className="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0"
+                  />
+                  <span>Edit the shared menu, recipes &amp; offers (canManageMenu)</span>
+                </label>
+
+                <label className="flex items-center space-x-2 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={canManageSettings}
+                    onChange={(e) => setCanManageSettings(e.target.checked)}
+                    className="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0"
+                  />
+                  <span>Edit this branch&apos;s printers, receipt text &amp; payment QR (canManageSettings)</span>
+                </label>
               </div>
 
               <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
@@ -765,6 +798,27 @@ export const StaffView: React.FC = () => {
                     className="rounded bg-slate-900 border-slate-700 text-blue-500"
                   />
                   <span>Reports &amp; Analytics</span>
+                </label>
+
+                <label className="flex items-center space-x-2 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editCanManageMenu}
+                    disabled={!mayGrantMenu}
+                    onChange={(e) => setEditCanManageMenu(e.target.checked)}
+                    className="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0"
+                  />
+                  <span>Edit the shared menu, recipes &amp; offers (canManageMenu)</span>
+                </label>
+
+                <label className="flex items-center space-x-2 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editCanManageSettings}
+                    onChange={(e) => setEditCanManageSettings(e.target.checked)}
+                    className="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0"
+                  />
+                  <span>Edit this branch&apos;s printers, receipt text &amp; payment QR (canManageSettings)</span>
                 </label>
               </div>
 

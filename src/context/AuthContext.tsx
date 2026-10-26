@@ -7,9 +7,9 @@ interface AuthContextType {
   outlets: Outlet[];
   activeOutlet: Outlet | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, tenantCode?: string) => Promise<void>;
   logout: () => void;
-  switchOutlet: (outletId: number) => void;
+  switchOutlet: (outletId: number | null) => void;
   refreshOutlets: () => Promise<void>;
   updateUser: (updated: Partial<User>) => void;
   updateTenantLogo: (logoUrl: string) => void;
@@ -67,8 +67,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const login = async (username: string, password: string) => {
-    const data = await api.post('/auth/login', { username, password });
+  const login = async (username: string, password: string, tenantCode?: string) => {
+    // The cafe code picks the cafe's own database; leave it out only for SaaS platform (super admin) accounts.
+    const data = await api.post('/auth/login', { username, password, tenantCode: tenantCode?.trim() || undefined });
     if (!data.token) {
       throw new Error(data.message || 'Login failed');
     }
@@ -85,6 +86,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       canManageInventory: data.canManageInventory,
       canManageExpenses: data.canManageExpenses,
       canViewReports: data.canViewReports,
+      canPrintBill: data.canPrintBill,
+      canManageMenu: data.canManageMenu,
+      canManageSettings: data.canManageSettings,
       mustChangePassword: data.mustChangePassword,
       tenantId: data.tenantId,
       tenantName: data.tenantName,
@@ -133,7 +137,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('pos_user');
   };
 
-  const switchOutlet = (outletId: number) => {
+  const switchOutlet = (outletId: number | null) => {
+    if (outletId === null) {
+      // Whole-cafe view (owner / main manager): no branch header is sent, so every branch is included.
+      setActiveOutlet(null);
+      api.setActiveOutletId(null);
+      window.location.reload();
+      return;
+    }
     const found = outlets.find(o => o.id === outletId);
     if (found) {
       setActiveOutlet(found);

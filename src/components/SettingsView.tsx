@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { PrinterSetting, GstSetting } from '../types/pos';
+import { BrandingPanel } from './BrandingPanel';
 import {
   Settings,
   Printer,
@@ -29,6 +30,7 @@ export const SettingsView: React.FC = () => {
   const [cafeAddress, setCafeAddress] = useState('');
   const [cafeGst, setCafeGst] = useState('');
   const [cafeLogoUrl, setCafeLogoUrl] = useState('');
+  const [cafeTagline, setCafeTagline] = useState('');
   const [isSavingBrand, setIsSavingBrand] = useState(false);
   const [brandStatus, setBrandStatus] = useState<string | null>(null);
 
@@ -58,6 +60,7 @@ export const SettingsView: React.FC = () => {
         setCafeAddress(tenantCfg.address || '');
         setCafeGst(tenantCfg.gstNumber || '');
         setCafeLogoUrl(tenantCfg.logoUrl || '');
+        setCafeTagline(tenantCfg.tagline || '');
       }
 
       if (printerCfg) {
@@ -81,23 +84,6 @@ export const SettingsView: React.FC = () => {
     loadSettings();
   }, []);
 
-  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Logo image file size must be less than 2MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setCafeLogoUrl(result);
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSaveBrand = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingBrand(true);
@@ -109,7 +95,7 @@ export const SettingsView: React.FC = () => {
         contactPhone: cafePhone,
         address: cafeAddress,
         gstNumber: cafeGst,
-        logoUrl: cafeLogoUrl,
+        tagline: cafeTagline,
       });
       updateTenantLogo(saved.logoUrl || '');
       setBrandStatus('Cafe brand details and logo updated successfully!');
@@ -166,7 +152,8 @@ export const SettingsView: React.FC = () => {
         </div>
       )}
 
-      {/* Cafe Brand & Logo Configuration Card */}
+      {/* Cafe Brand & Logo Configuration Card (owner and main manager) */}
+      {['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER'].includes(user?.role || '') && (
       <div className="glass-panel p-6 rounded-2xl border-slate-800/80 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div className="flex items-center space-x-3">
@@ -184,58 +171,8 @@ export const SettingsView: React.FC = () => {
 
         <form onSubmit={handleSaveBrand} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Logo Preview & Upload */}
-            <div className="lg:col-span-1 p-5 bg-surface-950/60 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center space-y-4">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Cafe Brand Logo
-              </span>
-              <div className="w-28 h-28 rounded-2xl border-2 border-dashed border-slate-700 bg-surface-900 flex items-center justify-center overflow-hidden shadow-inner group relative">
-                {cafeLogoUrl ? (
-                  <img
-                    src={cafeLogoUrl}
-                    alt="Cafe Logo"
-                    className="w-full h-full object-contain p-2"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center text-slate-500">
-                    <ImageIcon className="w-8 h-8 mb-1" />
-                    <span className="text-[10px]">No logo uploaded</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full space-y-2">
-                <label className="flex items-center justify-center space-x-2 w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold border border-slate-700 cursor-pointer transition">
-                  <Upload className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Upload Logo Image</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoFileUpload}
-                    className="hidden"
-                  />
-                </label>
-                <input
-                  type="text"
-                  placeholder="Or enter image URL..."
-                  value={cafeLogoUrl}
-                  onChange={(e) => setCafeLogoUrl(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-[11px] text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-amber-500"
-                />
-                {cafeLogoUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setCafeLogoUrl('')}
-                    className="text-[10px] text-rose-400 hover:text-rose-300 font-medium"
-                  >
-                    Remove Logo
-                  </button>
-                )}
-              </div>
-            </div>
-
             {/* Brand Details Inputs */}
-            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Cafe / Restaurant Name
@@ -251,6 +188,20 @@ export const SettingsView: React.FC = () => {
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Tagline / quote (shown under your name on the customer menu)
+                </label>
+                <input
+                  type="text"
+                  maxLength={200}
+                  value={cafeTagline}
+                  onChange={(e) => setCafeTagline(e.target.value)}
+                  placeholder="e.g. Where time tastes better"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
               </div>
 
               <div>
@@ -331,6 +282,10 @@ export const SettingsView: React.FC = () => {
           </div>
         </form>
       </div>
+      )}
+
+      {/* Logo & payment QR uploads (cafe-wide for owner/main manager; per branch for branch managers) */}
+      <BrandingPanel />
 
       {/* Cloud Bridge Status Pill */}
       <div className="glass-panel p-5 rounded-2xl border-slate-800/80 flex items-center justify-between">

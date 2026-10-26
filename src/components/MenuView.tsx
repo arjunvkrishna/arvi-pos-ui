@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { Category, MenuItem } from '../types/pos';
 import { UtensilsCrossed, Plus, Edit, Trash2, Check, X, Search } from 'lucide-react';
 
 export const MenuView: React.FC = () => {
+  const { user, activeOutlet } = useAuth();
+  const canSetBranchPrice = !!activeOutlet && (['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER', 'MANAGER'].includes(user?.role || '') || !!user?.canManageSettings);
+  // Owner and main manager always may; a branch manager or staff member only when delegated the menu right.
+  const canEditMenu = ['ADMIN', 'CAFE_ADMIN', 'GENERAL_MANAGER'].includes(user?.role || '') || !!user?.canManageMenu;
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [selectedCat, setSelectedCat] = useState<number | 'ALL'>('ALL');
@@ -81,15 +86,33 @@ export const MenuView: React.FC = () => {
     }
   };
 
+  // Sold out / available. With a branch selected this changes that branch only; in "All branches" it sets the cafe default.
   const toggleAvailability = async (item: MenuItem) => {
     try {
-      await api.put(`/menu-items/${item.id}`, {
-        ...item,
-        isAvailable: !item.isAvailable,
-      });
+      await api.patch(`/menu-items/${item.id}/toggle-availability`);
       await loadData();
     } catch (e: any) {
       alert(e.message || 'Could not update item availability');
+    }
+  };
+
+  const setBranchPrice = async (item: MenuItem) => {
+    const input = window.prompt(
+      `Price for ${activeOutlet?.name} (cafe-wide price is ₹${(item.basePrice ?? item.price).toFixed(2)}). Leave empty to use the cafe-wide price.`,
+      item.branchOverride ? String(item.price) : ''
+    );
+    if (input === null) return;
+    try {
+      if (input.trim() === '') {
+        await api.delete(`/menu-items/${item.id}/branch`);
+      } else {
+        const value = Number(input);
+        if (!Number.isFinite(value) || value < 0) throw new Error('Enter a valid price');
+        await api.put(`/menu-items/${item.id}/branch`, { price: value });
+      }
+      await loadData();
+    } catch (e: any) {
+      alert(e.message || 'Could not set the branch price');
     }
   };
 
@@ -109,6 +132,7 @@ export const MenuView: React.FC = () => {
           </h1>
           <p className="text-xs text-slate-400 mt-1">Configure categories, prices, dishes and availability</p>
         </div>
+        {canEditMenu && (
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowAddCat(true)}
@@ -124,6 +148,7 @@ export const MenuView: React.FC = () => {
             <span>Add Menu Item</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* Filter Tabs */}
@@ -187,7 +212,17 @@ export const MenuView: React.FC = () => {
               </span>
               <div>
                 <h4 className="font-bold text-xs text-white">{item.name}</h4>
-                <p className="font-mono text-xs font-extrabold text-amber-400 mt-0.5">₹{item.price.toFixed(2)}</p>
+                <p className="font-mono text-xs font-extrabold text-amber-400 mt-0.5">
+                  ₹{item.price.toFixed(2)}
+                  {item.branchOverride && item.basePrice !== undefined && item.basePrice !== item.price && (
+                    <span className="ml-1 text-[10px] text-slate-500 line-through">₹{item.basePrice.toFixed(2)}</span>
+                  )}
+                </p>
+                {canSetBranchPrice && (
+                  <button type="button" onClick={() => setBranchPrice(item)} className="text-[10px] text-sky-400 hover:text-sky-300">
+                    {item.branchOverride ? 'Edit branch price' : 'Set branch price'}
+                  </button>
+                )}
                 {item.description && (
                   <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{item.description}</p>
                 )}

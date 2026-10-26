@@ -125,12 +125,41 @@ class ApiClient {
     return response.json();
   }
 
+  /** Multipart upload (images). No JSON content type: the browser sets the multipart boundary itself. */
+  async upload<T = any>(endpoint: string, file: File, method: 'PUT' | 'POST' = 'PUT'): Promise<T> {
+    const form = new FormData();
+    form.append('file', file);
+    const headers: Record<string, string> = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    if (this.activeOutletId) headers['X-Outlet-Id'] = this.activeOutletId.toString();
+    const response = await fetch(`${API_BASE}${endpoint}`, { method, headers, body: form });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(err.message || err.error || `HTTP ${response.status}`);
+    }
+    return response.json();
+  }
+
+  /** Fetches an image that needs the login (e.g. the payment QR) and returns a temporary URL for <img>. */
+  async imageUrl(endpoint: string): Promise<string | null> {
+    const headers: Record<string, string> = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    if (this.activeOutletId) headers['X-Outlet-Id'] = this.activeOutletId.toString();
+    const response = await fetch(`${API_BASE}${endpoint}`, { headers });
+    if (!response.ok) return null;
+    return URL.createObjectURL(await response.blob());
+  }
+
   get<T = any>(endpoint: string, params?: Record<string, any>) {
     return this.request<T>(endpoint, { method: 'GET', params });
   }
 
   post<T = any>(endpoint: string, data?: any) {
     return this.request<T>(endpoint, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  patch<T = any>(endpoint: string, data?: any) {
+    return this.request<T>(endpoint, { method: 'PATCH', body: data === undefined ? undefined : JSON.stringify(data) });
   }
 
   put<T = any>(endpoint: string, data?: any) {
