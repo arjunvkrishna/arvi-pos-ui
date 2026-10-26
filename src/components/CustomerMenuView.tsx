@@ -15,8 +15,9 @@ export const CustomerMenuView: React.FC = () => {
       try {
         // Each cafe has its own menu: the QR link names it (/menu?cafe=<code>).
         const cafe = new URLSearchParams(window.location.search).get('cafe');
+        const branch = new URLSearchParams(window.location.search).get('branch');
         const res = cafe
-          ? await fetch(`/api/public/${encodeURIComponent(cafe)}/menu`).then(r => r.json()).catch(() => null)
+          ? await fetch(`/api/public/${encodeURIComponent(cafe)}/menu${branch ? `?branch=${encodeURIComponent(branch)}` : ''}`).then(r => r.json()).catch(() => null)
           : null;
         if (res && res.categories && res.items) {
           setCategories(res.categories);

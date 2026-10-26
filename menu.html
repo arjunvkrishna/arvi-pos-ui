@@ -325,7 +325,10 @@
           renderDisabledView('This menu link is incomplete. Please scan the QR code at your table again.');
           return;
         }
-        const response = await fetch('/api/public/' + encodeURIComponent(cafe) + '/menu?_t=' + Date.now(), {
+        // Optional branch (?branch=CODE) so prices and sold-out items are that branch's own.
+        const branch = new URLSearchParams(window.location.search).get('branch');
+        const branchQuery = branch ? '&branch=' + encodeURIComponent(branch) : '';
+        const response = await fetch('/api/public/' + encodeURIComponent(cafe) + '/menu?_t=' + Date.now() + branchQuery, {
           cache: 'no-store',
           headers: { 'Accept': 'application/json' }
         });
