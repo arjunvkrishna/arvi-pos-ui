@@ -1,3 +1,4 @@
+import { getSession } from '../../api/session';
 import { api, ApiError } from '../../api/client';
 
 export interface Customer {
@@ -114,8 +115,10 @@ export const issueGiftCard = (data: {
   expiresAt?: string | null;
 }) => api<GiftCard>('/gift-cards', { method: 'POST', body: data });
 
+/** The cafe is part of the address (each cafe has its own database), so the same card code in two cafes never mixes. */
+export const giftCardBalancePath = (cafe: string, code: string) => `/public/${encodeURIComponent(cafe)}/gift-cards/${encodeURIComponent(code)}/balance`;
 export const fetchGiftCardBalance = (code: string) =>
-  api<{ code: string; currentBalance: number; status: string }>(`/public/gift-cards/${encodeURIComponent(code)}/balance`);
+  api<{ code: string; currentBalance: number; status: string }>(giftCardBalancePath(getSession()?.tenantCode ?? '', code));
 
 export interface Coupon {
   id: number;

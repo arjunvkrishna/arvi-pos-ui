@@ -1,3 +1,4 @@
+import { giftCardBalancePath } from './api';
 import { describe, expect, it } from 'vitest';
 
 export const calculateLoyaltyEarned = (amount: number): number => {
@@ -35,5 +36,14 @@ describe('Customer CRM & Loyalty Points Rules', () => {
     expect(maxRedeemablePoints(150, 80)).toBe(80);
     expect(maxRedeemablePoints(50, 120)).toBe(50);
     expect(maxRedeemablePoints(0, 100)).toBe(0);
+  });
+});
+
+describe('gift card balance address', () => {
+  it('names the cafe, so the right cafe\'s database is asked', () => {
+    expect(giftCardBalancePath('bluedoor', 'GC-1')).toBe('/public/bluedoor/gift-cards/GC-1/balance');
+  });
+  it('escapes anything odd in the code', () => {
+    expect(giftCardBalancePath('bluedoor', 'A/B C')).toBe('/public/bluedoor/gift-cards/A%2FB%20C/balance');
   });
 });
