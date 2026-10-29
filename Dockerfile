@@ -1,9 +1,9 @@
 # ── Stage 1: Build React Vite app ──────────────────────
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 RUN npm run build
@@ -16,7 +16,7 @@ RUN apk update && apk upgrade --no-cache \
     && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
     && sed -i 's|/run/nginx.pid|/tmp/nginx.pid|' /etc/nginx/nginx.conf \
     && sed -i 's/^user /#user /' /etc/nginx/nginx.conf \
-    && mkdir -p /var/cache/nginx/client_temp /var/run /etc/nginx/conf.d \
+    && mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/public_menu /var/run /etc/nginx/conf.d \
     && chown -R nginx:nginx /var/cache/nginx /var/run /etc/nginx/conf.d
 
 COPY --chown=nginx:nginx nginx.conf /etc/nginx/conf.d/default.conf
