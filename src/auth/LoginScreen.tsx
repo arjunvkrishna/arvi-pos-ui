@@ -53,7 +53,7 @@ export function LoginScreen() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
           <img src={asset('logo-05.png')} alt="ARVI POS Logo" className="w-16 h-16 mx-auto mb-4 object-contain" />
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">Sign in to ARVI POS</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">ARVI POS</h1>
           <p className="text-sm text-muted mt-1">Restaurants, cafes &amp; branches</p>
         </div>
 
