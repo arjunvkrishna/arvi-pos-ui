@@ -1,18 +1,26 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ARVI - Multi-Franchise Cafe POS</title>
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-surface-950 text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ARVI POS</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#f59e0b" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ARVI POS" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <script src="%BASE_URL%theme-init.js"></script>
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <!-- Everything is served from this site (no outside hosts), same vendored assets as the classic app. -->
+  <link rel="preload" href="/vendor/fontawesome-6.5.1/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/vendor/fontawesome-6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/vendor/outfit-1/outfit.css" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>

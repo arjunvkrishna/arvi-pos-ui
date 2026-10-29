@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Design tokens (RGB channels so Tailwind can add opacity) ---- */
+:root {
+  --canvas: 246 247 249; --surface: 255 255 255; --subtle: 241 243 245;
+  --line: 229 231 235; --line-strong: 209 213 219;
+  --fg: 17 24 39; --muted: 100 108 122; --faint: 156 163 175;
+  --brand: 245 158 11; --brand-text: 180 83 9;
+  --ok: 21 122 58; --danger: 200 32 32; --warn: 168 78 8; --info: 37 99 235;
+  color-scheme: light;
+}
+:root.dark {
+  --canvas: 10 12 16; --surface: 18 21 27; --subtle: 28 32 40;
+  --line: 40 45 55; --line-strong: 58 65 78;
+  --fg: 243 244 246; --muted: 156 163 175; --faint: 107 114 128;
+  --brand: 245 158 11; --brand-text: 252 211 77;
+  --ok: 74 222 128; --danger: 248 113 113; --warn: 251 191 36; --info: 96 165 250;
+  color-scheme: dark;
+}
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { @apply bg-canvas text-fg font-sans antialiased; }
+  *, ::before, ::after { border-color: rgb(var(--line)); }
+  :focus-visible { outline: 2px solid rgb(var(--brand)); outline-offset: 2px; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--line-strong)); border-radius: 9999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+}
+
+@layer components {
+  .card { @apply bg-surface border border-line rounded-xl shadow-card; }
+
+  .btn { @apply inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-sm font-medium whitespace-nowrap transition select-none active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-sm { @apply h-8 px-2.5 text-xs; }
+  .btn-primary { @apply bg-brand text-gray-950 hover:brightness-95 active:brightness-90; }
+  .btn-secondary { @apply bg-surface text-fg border border-line-strong hover:bg-subtle; }
+  .btn-ghost { @apply text-muted hover:text-fg hover:bg-subtle; }
+  .btn-danger { @apply bg-danger text-white hover:brightness-95; }
+  .btn-soft-danger { @apply bg-danger/10 text-danger hover:bg-danger/15; }
+  .btn-soft-ok { @apply bg-ok/10 text-ok hover:bg-ok/15; }
+  .btn-soft-brand { @apply bg-brand/15 text-brand-text hover:bg-brand/25; }
+  .btn-icon { @apply w-9 px-0; }
+  .btn-icon.btn-sm { @apply w-8 px-0; }
+
+  .input { @apply w-full h-10 px-3 rounded-lg border border-line-strong bg-surface text-fg text-base sm:text-sm placeholder:text-faint transition focus:border-brand focus:ring-2 focus:ring-brand/30 focus:outline-none disabled:opacity-60; }
+  select.input { @apply pr-8; }
+  .label { @apply block text-xs font-medium text-muted mb-1.5; }
+  .hint { @apply text-xs text-muted; }
+
+  .badge { @apply whitespace-nowrap inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold leading-4; }
+  .badge-neutral { @apply bg-subtle text-muted; }
+  /* quantity label on a connector of the Stock Links diagram */
+  .chip-edge { @apply z-10 inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-line-strong bg-surface text-xs font-semibold text-fg shadow-card whitespace-nowrap transition hover:border-brand; }
+  .chip-edge-on { @apply border-brand bg-brand/15 text-brand-text; }
+  .badge-brand { @apply bg-brand/15 text-brand-text; }
+  .badge-ok { @apply bg-ok/10 text-ok; }
+  .badge-danger { @apply bg-danger/10 text-danger; }
+  .badge-warn { @apply bg-warn/10 text-warn; }
+  .badge-info { @apply bg-info/10 text-info; }
+
+  /* Tables: a clean grid on tablets and up, a stack of cards on phones (single DOM, labels come from data-label). */
+  .rtable { @apply w-full text-sm; }
+  .rtable thead th { @apply text-left text-[11px] font-semibold uppercase tracking-wide text-muted px-4 py-2.5 bg-subtle/60 border-b border-line; }
+  .rtable tbody td { @apply px-4 py-3 align-middle; }
+  .rtable tbody tr { @apply border-b border-line last:border-0 hover:bg-subtle/50; }
+  @media (max-width: 767px) {
+    .rtable thead { display: none; }
+    .rtable, .rtable tbody, .rtable tr, .rtable td { display: block; width: 100%; }
+    .rtable tbody tr { @apply p-3; }
+    .rtable tbody td { @apply flex items-center justify-between gap-3 px-1 py-1.5; }
+    .rtable tbody td::before { content: attr(data-label); @apply text-[11px] font-medium text-muted shrink-0; }
+    .rtable tbody td[data-label=""]::before, .rtable tbody td:not([data-label])::before { content: none; }
+    .rtable tbody td.cell-actions { @apply justify-start flex-wrap pt-2 mt-1 border-t border-line; }
+    .rtable tbody td.cell-title { @apply text-base font-semibold pb-1; }
+  }
+
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .safe-bottom { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+}
+
+
+/* ------------------------------------------------------------------
+   Motion. Short, vertical-only entrances (so nothing ever pushes the page sideways), press feedback and a
+   quiet live pulse. Everything stops for people who ask their device for reduced motion.
+   ------------------------------------------------------------------ */
+/* Animations use fill-mode `backwards` (never `both`/`forwards`): a transform animation that keeps filling after it ends makes
+   the element the containing block of every position:fixed dialog inside it, which pushed dialogs to the bottom of the page. */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes live-ring { 0% { box-shadow: 0 0 0 0 rgb(var(--brand) / 0.55); } 70%, 100% { box-shadow: 0 0 0 7px rgb(var(--brand) / 0); } }
+
+@layer components {
+  .anim-fade-in { animation: fade-in 0.18s ease-out backwards; }
+  .anim-rise-in { animation: rise-in 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+  .anim-bump { animation: bump 0.32s ease-out; }
+  /* a phone shows dialogs as a bottom sheet that slides up; larger screens pop in */
+  .dialog-panel { animation: sheet-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  @media (min-width: 640px) { .dialog-panel { animation: pop-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; } }
+  /* list items arriving one after another: set style="--i: <index>" (the first eight are staggered, the rest arrive together) */
+  .stagger-item { animation: rise-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; animation-delay: calc(min(var(--i, 0), 8) * 40ms); }
+  .lift { @apply transition duration-200; }
+  .lift:hover { @apply -translate-y-0.5 shadow-pop; }
+  .lift:active { transform: translateY(0) scale(0.99); }
+  .live-dot { @apply inline-block w-2 h-2 rounded-full bg-brand; animation: live-ring 1.6s ease-out infinite; }
+  .shimmer { background-image: linear-gradient(90deg, rgb(var(--subtle)) 25%, rgb(var(--line)) 37%, rgb(var(--subtle)) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

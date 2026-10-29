@@ -1,6 +1,6 @@
 {
-  "name": "NERAM Cloud POS",
-  "short_name": "NERAM POS",
+  "name": "ARVI Cloud POS",
+  "short_name": "ARVI POS",
   "description": "Smart, lightning-fast Point of Sale, table ordering, KOT, and cafe management system.",
   "start_url": "/",
   "scope": "/",
