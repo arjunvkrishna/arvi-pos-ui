@@ -6,6 +6,9 @@ import type { Session } from './types';
 
 export const API_BASE = '/api';
 
+/** Sent when the server says a module is not in the plan; the shell then reads the plan again. */
+export const PLAN_REFRESH_EVENT = 'arvi:plan-refresh';
+
 export class ApiError extends Error {
   readonly status: number;
   readonly body: unknown;
@@ -138,6 +141,8 @@ export async function api<T = unknown>(path: string, opts: RequestOptions = {}, 
   const body = await parse(res);
   if (!res.ok) {
     const retryAfter = Number(res.headers.get('Retry-After')) || undefined;
+    // the plan changed under this screen (or this screen is out of date): have the session read the plan again
+    if (res.status === 403 && (body as { code?: string } | null)?.code === 'PLAN_FEATURE') window.dispatchEvent(new Event(PLAN_REFRESH_EVENT));
     throw new ApiError(messageOf(body, res.statusText || 'Request failed'), res.status, body, retryAfter);
   }
   return body as T;

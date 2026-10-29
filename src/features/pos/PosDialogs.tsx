@@ -2,6 +2,8 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Dialog } from '../../components/Dialog';
 import { showToast } from '../../components/toast';
 import { SegmentedTabs } from '../../components/ui';
+import { useSession } from '../../api/session';
+import { hasFeature } from '../../api/roles';
 import type { Bill } from '../bills/types';
 import { floorsIn } from './floors';
 import { FloorFilter, OrderChip } from './Places';
@@ -36,6 +38,8 @@ export function ConfirmPaymentDialog({
     couponCode?: string
   ) => void;
 }) {
+  // gift cards, loyalty points and coupons come with the customers module; a plan without it pays by cash, UPI or card only
+  const crm = useSession((s) => (s.user ? hasFeature(s.user, 'CRM') : true));
   const [mode, setMode] = useState('CASH');
   const [notes, setNotes] = useState('');
   const [tipText, setTipText] = useState('');
@@ -55,8 +59,7 @@ export function ConfirmPaymentDialog({
     { v: 'CASH', icon: 'fa-money-bill-wave', t: 'Cash' },
     { v: 'UPI', icon: 'fa-qrcode', t: 'UPI' },
     { v: 'CARD', icon: 'fa-credit-card', t: 'Card' },
-    { v: 'GIFT_CARD', icon: 'fa-gift', t: 'Gift Card' },
-    { v: 'LOYALTY_POINTS', icon: 'fa-star', t: 'Loyalty' },
+    ...(crm ? [{ v: 'GIFT_CARD', icon: 'fa-gift', t: 'Gift Card' }, { v: 'LOYALTY_POINTS', icon: 'fa-star', t: 'Loyalty' }] : []),
   ];
 
   // Customer & Loyalty & Gift card state
@@ -65,7 +68,7 @@ export function ConfirmPaymentDialog({
   const [giftCardBalance, setGiftCardBalance] = useState<number | null>(null);
   const [redeemPoints, setRedeemPoints] = useState('');
   const [detached, setDetached] = useState(false);
-  const { minRedeem } = useLoyaltySettings();
+  const { minRedeem } = useLoyaltySettings(crm);
   const pointsLapsed = customer ? expiryInfo(customer.pointsBalance, customer.pointsExpireAt, businessToday()).tone === 'lapsed' : false;
   const limits = customer ? redeemLimits(customer.pointsBalance, net, minRedeem, pointsLapsed) : null;
   const billCustomerId = customer?.id ?? (detached ? null : order.customerId);
@@ -188,7 +191,7 @@ export function ConfirmPaymentDialog({
           <div className="flex items-center justify-between border-t border-line pt-2 mt-1"><dt className="font-semibold">Net amount due</dt><dd id="confirmPayAmount" className="text-xl font-bold text-brand-text">{inr(order.netAmount)}</dd></div>
         </dl>
 
-        <LoyaltyMember customer={customer} onChange={(c) => { setCustomer(c); setDetached(c === null); setRedeemPoints(''); }} />
+        {crm && <LoyaltyMember customer={customer} onChange={(c) => { setCustomer(c); setDetached(c === null); setRedeemPoints(''); }} />}
         <label htmlFor="confirmPaySplit" className="flex items-center gap-2 text-sm text-fg cursor-pointer"><input id="confirmPaySplit" type="checkbox" checked={split} onChange={(e) => startSplit(e.target.checked)} className="h-4 w-4 accent-[rgb(var(--brand))]" />Split payment (more than one way or more than one guest)</label>
         {split && (
           <div id="splitPayBox" className="rounded-lg border border-line p-3 space-y-2.5">
@@ -286,6 +289,7 @@ export function ConfirmPaymentDialog({
         )}
 
         {/* Coupon Code Section */}
+        {crm && (
         <div className="rounded-xl border border-line bg-subtle/50 p-3 space-y-2">
           <label htmlFor="confirmCouponCode" className="label">Marketing Coupon (optional)</label>
           <div className="flex gap-2">
@@ -316,6 +320,7 @@ export function ConfirmPaymentDialog({
             </p>
           )}
         </div>
+        )}
 
         <div>
           <label htmlFor="confirmPayTip" className="label">Tip (optional)</label>

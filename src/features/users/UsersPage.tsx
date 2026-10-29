@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSession } from '../../api/session';
 import { showToast } from '../../components/toast';
+import { atLimit, isCafeWide } from '../../api/roles';
+import { PlanUsage } from '../shell/PlanUsage';
 import { Badge, EmptyState, PageHeader, Skeleton } from '../../components/ui';
 import { deleteUser, toggleActive, unlockUser, type UserAccount } from './api';
 import { CreateUserDialog, PermissionsDialog, ResetPasswordDialog } from './dialogs';
@@ -30,13 +32,17 @@ export function UsersPage() {
     remove.mutate(u.id);
   };
 
+  // only the owner and main manager are shown every login, so only they can count them against the plan
+  const activeLogins = (users ?? []).filter((u) => u.active !== false).length;
+  const full = !!me.plan && isCafeWide(me) && !!users && atLimit(activeLogins, me.plan.maxLogins);
   const loadError = isError ? error.message : '';
   useEffect(() => { if (loadError) showToast(`Failed to load users: ${loadError}`, 'error'); }, [loadError]);
 
   return (
     <section id="tab-users" data-testid="tab-users" className="space-y-5">
       <PageHeader title="User accounts" id="userMgmtSubtitle" description={subtitleFor(me)}
-        actions={<button type="button" onClick={() => setModal({ kind: 'create' })} className="btn btn-primary"><i className="fa-solid fa-plus" />Create user account</button>} />
+        actions={<button type="button" onClick={() => setModal({ kind: 'create' })} disabled={full} title={full ? 'Your plan\'s staff-login limit is reached' : undefined} className="btn btn-primary"><i className="fa-solid fa-plus" />Create user account</button>} />
+      {me.plan && users && isCafeWide(me) && <PlanUsage plan={me.plan} what="staff logins" used={activeLogins} limit={me.plan.maxLogins} />}
 
       <div className="card overflow-hidden">
         {isPending ? <Skeleton /> : users?.length === 0 ? <EmptyState icon="fa-users" title="No users found" /> : (

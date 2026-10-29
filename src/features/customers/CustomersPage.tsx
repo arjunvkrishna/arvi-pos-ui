@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { hasFeature } from '../../api/roles';
+import { useSession } from '../../api/session';
 import { Badge, EmptyState, PageHeader, SearchInput, SegmentedTabs, Skeleton, Field } from '../../components/ui';
 import { Dialog } from '../../components/Dialog';
 import { showToast } from '../../components/toast';
@@ -22,6 +24,7 @@ import { ExpiryChip } from './ExpiryChip';
 
 export function CustomersPage() {
   const qc = useQueryClient();
+  const campaignsInPlan = useSession((u) => (u.user ? hasFeature(u.user, 'CAMPAIGNS') : true));   // marketing campaigns are an ENTERPRISE module
   const [tab, setTab] = useState<'customers' | 'giftcards' | 'coupons' | 'campaigns'>('customers');
   const [query, setQuery] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
@@ -129,7 +132,7 @@ export function CustomersPage() {
             { value: 'customers', label: `Customers (${customers.length})`, id: 'tabModeCustomers' },
             { value: 'giftcards', label: `Gift Cards (${giftCards.length})`, id: 'tabModeGiftCards' },
             { value: 'coupons', label: 'Coupons', id: 'tabModeCoupons' },
-            { value: 'campaigns', label: 'Campaigns', id: 'tabModeCampaigns' },
+            ...(campaignsInPlan ? [{ value: 'campaigns' as const, label: 'Campaigns', id: 'tabModeCampaigns' }] : []),
           ]}
         />
         {tab === 'customers' && (
@@ -329,7 +332,7 @@ export function CustomersPage() {
       )}
 
       {tab === 'coupons' && <CouponsTab />}
-      {tab === 'campaigns' && <CampaignsTab />}
+      {tab === 'campaigns' && campaignsInPlan && <CampaignsTab />}
 
       {/* Customer Detail & Loyalty History Modal */}
       {customerModalOpen && selectedCustomer && (

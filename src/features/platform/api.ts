@@ -1,7 +1,7 @@
 import { api } from '../../api/client';
 
 export interface Cafe {
-  id: number; name: string; code: string; status: string; subscriptionPlan: string; maxOutlets: number;
+  id: number; name: string; code: string; status: string; subscriptionPlan: string; maxOutlets: number; maxUsers?: number;
   contactEmail?: string | null; contactPhone?: string | null; dbName?: string; schemaVersion?: string;
   outletsCount?: number; usersCount?: number; totalBillsCount?: number; totalGmv?: number; createdAt?: string;
 }

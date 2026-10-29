@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Badge, EmptyState, Field, Skeleton } from '../../components/ui';
 import type { InventoryItem, StockTransaction } from './api';
+import { useSession } from '../../api/session';
+import { hasFeature } from '../../api/roles';
 import { useSuppliersList, useTransactions } from './hooks';
 import { reasonLabel, toHistoryFilters, type HistoryPreset } from './rules';
 
@@ -21,7 +23,8 @@ export function HistoryView({ items }: { items: InventoryItem[] }) {
   const [supplierId, setSupplierId] = useState('');
   // Filters apply on "Apply", like the classic screen; the list loads once with no filters first.
   const [applied, setApplied] = useState(() => toHistoryFilters('all', '', '', '', '', ''));
-  const suppliers = useSuppliersList(true);
+  const hasSuppliers = useSession((u) => (u.user ? hasFeature(u.user, 'SUPPLIERS_EXPENSES') : true));
+  const suppliers = useSuppliersList(hasSuppliers);
   const txns = useTransactions(applied, true);
   const list: StockTransaction[] = txns.data ?? [];
 
@@ -50,11 +53,13 @@ export function HistoryView({ items }: { items: InventoryItem[] }) {
             <option value="">All products</option>{items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
         </Field>
+        {hasSuppliers && (
         <Field id="invHistSupplierFilter" label="Supplier">
           <select id="invHistSupplierFilter" value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="input">
             <option value="">All suppliers</option>{(suppliers.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </Field>
+        )}
         <button type="submit" id="btnApplyHistory" className="btn btn-primary h-10"><i className="fa-solid fa-filter" />Apply filters</button>
       </form>
 

@@ -101,3 +101,42 @@ describe('tabFromHash (old links)', () => {
     expect(tabFromHash('#tab-')).toBeNull();
   });
 });
+
+describe('screens that belong to a plan module', () => {
+  const plan = (name: 'STARTER' | 'PRO' | 'ENTERPRISE'): Session['plan'] => ({
+    name, maxBranches: 1, maxLogins: 5,
+    features: name === 'STARTER' ? [] : name === 'PRO'
+      ? ['STOCK_CONTROL', 'SUPPLIERS_EXPENSES', 'CRM', 'STAFF_PAYROLL', 'TELEGRAM', 'EXPORTS']
+      : ['STOCK_CONTROL', 'SUPPLIERS_EXPENSES', 'CRM', 'STAFF_PAYROLL', 'TELEGRAM', 'EXPORTS', 'CAMPAIGNS', 'SCHEDULING', 'ACCOUNTING', 'DOCUMENTS', 'AUDIT'],
+  });
+  const owner = (name: 'STARTER' | 'PRO' | 'ENTERPRISE') => person('ADMIN', { plan: plan(name) });
+
+  it('a STARTER owner keeps the till, kitchen, bills, menu, stock, analytics, users and branches only', () => {
+    expect(ids(owner('STARTER'))).toEqual(['pos', 'kds', 'bills', 'owner-dashboard', 'menu', 'inventory', 'analytics', 'users', 'gst', 'stocklinks', 'outlets', 'settings']);
+  });
+
+  it('PRO adds customers, staff & payroll, expenses, suppliers, attendance and Telegram, but not the ENTERPRISE screens', () => {
+    const list = ids(owner('PRO'));
+    for (const t of ['customers', 'staff', 'expenses', 'suppliers', 'attendance', 'telegram'] as const) expect(list).toContain(t);
+    for (const t of ['scheduling', 'documents', 'audit'] as const) expect(list).not.toContain(t);
+  });
+
+  it('ENTERPRISE opens every cafe screen', () => {
+    expect(ids(owner('ENTERPRISE'))).toEqual(CAFE_TABS);
+  });
+
+  it('a saved session from before plans existed hides nothing: the server still decides', () => {
+    expect(ids(person('ADMIN'))).toEqual(CAFE_TABS);
+  });
+
+  it('a screen outside the plan cannot be opened by address either', () => {
+    expect(canOpenTab(owner('STARTER'), 'customers')).toBe(false);
+    expect(canOpenTab(owner('PRO'), 'customers')).toBe(true);
+  });
+
+  it('attendance leaves a STARTER cafe\'s staff alone: their landing screen is never a hidden one', () => {
+    const cashier = person('CASHIER', { plan: plan('STARTER') });
+    expect(ids(cashier)).not.toContain('attendance');
+    expect(canOpenTab(cashier, defaultTab(cashier))).toBe(true);
+  });
+});

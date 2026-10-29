@@ -1,4 +1,4 @@
-import type { RealRole, Role, Session } from './types';
+import type { FeatureId, RealRole, Role, Session } from './types';
 
 /** Owners are ADMIN, general managers and branch managers are MANAGER, everyone else is EMPLOYEE: exactly how the server's rules read them. */
 export function tierOf(role: string): Role {
@@ -41,6 +41,14 @@ export const isCafeWide = (u: Session) => u.realRole === 'ADMIN' || u.realRole =
 export const isOwner = (u: Session) => u.realRole === 'ADMIN' || u.realRole === 'CAFE_ADMIN';
 /** Owner, general manager and branch manager. */
 export const isManagement = (u: Session) => u.role !== 'EMPLOYEE';
+
+/** Is this module part of the cafe's plan? Without plan information (an older saved session) nothing is hidden: the server still decides. */
+export const hasFeature = (u: Pick<Session, 'plan'>, feature: FeatureId) => !u.plan || u.plan.features.includes(feature);
+/** 999 and above means no limit. */
+export const UNLIMITED = 999;
+export const limitText = (n: number) => (n >= UNLIMITED ? 'Unlimited' : String(n));
+/** True when the plan's limit is reached, so one more cannot be added. */
+export const atLimit = (used: number, limit: number) => limit < UNLIMITED && used >= limit;
 
 /** Cancelling or voiding an order that is not yet paid: managers always, staff when a manager gave them the right. */
 export const canCancelOrder = (u: Session) => isManagement(u) || u.canCancelOrder === true;

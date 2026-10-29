@@ -8,8 +8,8 @@ import { fetchLoyaltySettings, loyaltySettingsKey, saveLoyaltySettings, type Loy
 import { DEFAULT_MIN_REDEEM } from './loyalty';
 
 /** The points settings the payment dialog and the server use. Falls back to the standard rules until they load. */
-export function useLoyaltySettings() {
-  const q = useQuery({ queryKey: loyaltySettingsKey, queryFn: fetchLoyaltySettings, staleTime: 60_000 });
+export function useLoyaltySettings(enabled = true) {
+  const q = useQuery({ queryKey: loyaltySettingsKey, queryFn: fetchLoyaltySettings, staleTime: 60_000, enabled });
   const minRedeem = q.data?.minRedeemPoints ?? DEFAULT_MIN_REDEEM;
   return { settings: q.data, minRedeem, expiryDays: q.data?.expiryDays };
 }

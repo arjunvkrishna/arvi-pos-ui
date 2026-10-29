@@ -5,7 +5,7 @@ import { costAlertsKey, countsKey, expiryKey, fetchCostAlerts, fetchCount, fetch
 
 export const useInventory = () => useQuery({ queryKey: inventoryKey, queryFn: fetchInventory });
 /** Expired and soon-to-expire stock; a failure just hides the expiry list (the stock table still works). */
-export const useExpiry = () => useQuery({ queryKey: expiryKey, queryFn: fetchExpiry, retry: false });
+export const useExpiry = (enabled = true) => useQuery({ queryKey: expiryKey, queryFn: fetchExpiry, retry: false, enabled });
 export const useSuppliersList = (enabled: boolean) => useQuery({ queryKey: ['suppliers', 'refs'], queryFn: fetchSuppliers, enabled });
 export const useTransactions = (filters: HistoryFilters, enabled: boolean) =>
   useQuery({ queryKey: ['inventory-transactions', filters], queryFn: () => fetchTransactions(filters), enabled });

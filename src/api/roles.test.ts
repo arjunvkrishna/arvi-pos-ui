@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { testSession } from '../test/session';
-import { canCancelOrder, canManageBranchSettings, canManageMenu, isCafeWide, isManagement, isOwner, normalizePatch, normalizeSession, outranks, roleLabel, tierOf } from './roles';
+import { hasFeature, limitText, canCancelOrder, canManageBranchSettings, canManageMenu, isCafeWide, isManagement, isOwner, normalizePatch, normalizeSession, outranks, roleLabel, tierOf } from './roles';
 
 describe('roles map onto the three tiers the server\'s rules use', () => {
   it('owners are ADMIN, general and branch managers MANAGER, everyone else EMPLOYEE', () => {
@@ -65,5 +65,16 @@ describe('what each person may do', () => {
   });
   it('speaks plainly', () => {
     expect([owner, general, branch, cashier].map(roleLabel)).toEqual(['Owner', 'General manager', 'Branch manager', 'Cashier']);
+  });
+});
+
+describe('plan features', () => {
+  const withPlan = (features: string[]) => ({ plan: { name: 'PRO' as const, maxBranches: 5, maxLogins: 25, features: features as never } });
+  it('is on when the plan lists the module', () => expect(hasFeature(withPlan(['CRM']), 'CRM')).toBe(true));
+  it('is off when the plan does not', () => expect(hasFeature(withPlan(['CRM']), 'CAMPAIGNS')).toBe(false));
+  it('nothing is hidden for a session saved before plans existed', () => expect(hasFeature({}, 'ACCOUNTING')).toBe(true));
+  it('999 and up reads as Unlimited', () => {
+    expect(limitText(999)).toBe('Unlimited');
+    expect(limitText(5)).toBe('5');
   });
 });

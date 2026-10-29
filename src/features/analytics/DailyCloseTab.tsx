@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSession } from '../../api/session';
+import { hasFeature } from '../../api/roles';
 import { showToast } from '../../components/toast';
 import { Badge, Field, Skeleton, Switch } from '../../components/ui';
 import { useSafeMutation as useMutation } from '../../lib/useSafeMutation';
@@ -38,6 +40,7 @@ function Settings() {
 
 /** One page for the end of the day, with a button to send it to the managers on Telegram. */
 export function DailyCloseTab() {
+  const telegram = useSession((s) => (s.user ? hasFeature(s.user, 'TELEGRAM') : true));
   const [date, setDate] = useState(isoDay());
   const today = isoDay();
   const q = useQuery({ queryKey: ['reports', 'daily-close', date], queryFn: () => fetchDailyClose(date), enabled: !!date });
@@ -54,7 +57,7 @@ export function DailyCloseTab() {
         <Field id="dailyCloseDate" label="Day"><input id="dailyCloseDate" type="date" max={today} value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="input" /></Field>
         <button type="button" aria-label="Next day" disabled={date >= today} onClick={() => setDate(shiftDay(date, 1))} className="btn btn-secondary w-10 h-10 p-0"><i className="fa-solid fa-chevron-right" /></button>
         <button type="button" onClick={() => setDate(today)} disabled={date === today} className="btn btn-secondary h-10">Today</button>
-        <button type="button" id="btnSendDailyClose" disabled={send.isPending || !d} onClick={() => send.mutate()} className="btn btn-primary h-10 ml-auto"><i className="fa-brands fa-telegram" />{send.isPending ? 'Sending...' : 'Send to Telegram now'}</button>
+        {telegram && <button type="button" id="btnSendDailyClose" disabled={send.isPending || !d} onClick={() => send.mutate()} className="btn btn-primary h-10 ml-auto"><i className="fa-brands fa-telegram" />{send.isPending ? 'Sending...' : 'Send to Telegram now'}</button>}
       </div>
 
       {q.isPending ? <div className="card"><Skeleton rows={6} /></div> : q.isError || !d ? <p className="card p-6 text-center text-sm text-danger">Failed to load the report: {q.error?.message}</p> : (<>
@@ -89,9 +92,9 @@ export function DailyCloseTab() {
                 <td data-label="Result"><Badge tone={c.tone}>{c.text}</Badge></td></tr>); })}</tbody></table></div>
         <div className="card p-4"><h3 className="text-sm font-medium text-fg mb-2">Stock</h3>
           <div className="flex flex-wrap gap-2 text-sm" id="dcStock"><Badge tone={d.lowStock ? 'warn' : 'neutral'}>{d.lowStock} low</Badge><Badge tone={d.belowZero ? 'danger' : 'neutral'}>{d.belowZero} below zero</Badge><Badge tone={d.expiringSoon ? 'warn' : 'neutral'}>{d.expiringSoon} expiring soon</Badge><Badge tone={d.expired ? 'danger' : 'neutral'}>{d.expired} expired</Badge></div></div>
-        <details className="card p-4"><summary className="cursor-pointer text-sm font-medium text-fg">Message that is sent to Telegram</summary><pre id="dcText" className="mt-3 text-xs whitespace-pre-wrap text-muted font-sans">{d.text}</pre></details>
+        {telegram && <details className="card p-4"><summary className="cursor-pointer text-sm font-medium text-fg">Message that is sent to Telegram</summary><pre id="dcText" className="mt-3 text-xs whitespace-pre-wrap text-muted font-sans">{d.text}</pre></details>}
       </>)}
-      <Settings />
+      {telegram && <Settings />}
     </div>
   );
 }

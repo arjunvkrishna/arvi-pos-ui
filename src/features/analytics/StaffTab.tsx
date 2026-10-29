@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSession } from '../../api/session';
+import { hasFeature } from '../../api/roles';
 import { Dialog } from '../../components/Dialog';
 import { showToast } from '../../components/toast';
 import { Badge, EmptyState, Field, SegmentedTabs, Skeleton } from '../../components/ui';
@@ -35,10 +37,11 @@ function PayDialog({ row, onClose }: { row: StaffRow; onClose: () => void }) {
 
 /** How each person is doing, and the tips they received and were handed. */
 export function StaffTab() {
+  const payroll = useSession((s) => (s.user ? hasFeature(s.user, 'STAFF_PAYROLL') : true));
   const [period, setPeriod] = useState<Period>('THIS_MONTH');
   const [pay, setPay] = useState<StaffRow | null>(null);
   const q = useQuery({ queryKey: ['reports', 'staff', period], queryFn: () => fetchStaffReport({ period, start: '', end: '' }) });
-  const payouts = useQuery({ queryKey: ['reports', 'payouts'], queryFn: fetchPayouts });
+  const payouts = useQuery({ queryKey: ['reports', 'payouts'], queryFn: fetchPayouts, enabled: payroll });
   const r = q.data;
   return (
     <div id="analytics-sub-staff" className="space-y-4">
@@ -61,14 +64,16 @@ export function StaffTab() {
                   <td data-label="Discounts" className="md:text-right text-muted">{rupee0(s.discounts)}</td><td data-label="Refunds" className={`md:text-right ${s.refunds > 0 ? 'text-danger' : 'text-muted'}`}>{rupee0(s.refunds)}</td>
                   <td data-label="Tips" className="md:text-right">{rupee0(s.tips)}</td>
                   <td data-label="Owed" className="md:text-right">{s.tipsOwed > 0 ? <Badge tone="warn">{rupee2(s.tipsOwed)}</Badge> : <span className="text-muted">-</span>}</td>
-                  <td className="md:text-right">{s.tipsOwed > 0 && <button type="button" className="btn btn-secondary btn-sm" data-pay={s.staff} onClick={() => setPay(s)}>Hand over</button>}</td>
+                  <td className="md:text-right">{payroll && s.tipsOwed > 0 && <button type="button" className="btn btn-secondary btn-sm" data-pay={s.staff} onClick={() => setPay(s)}>Hand over</button>}</td>
                 </tr>))}</tbody></table>)}
         </div>
       </>)}
+      {payroll && (
       <div className="card overflow-hidden"><p className="px-4 py-3 border-b border-line text-sm font-medium text-fg">Tips handed over</p>
         <table className="rtable"><thead><tr><th>Date</th><th>Staff</th><th className="text-right">Amount</th><th>Note</th><th>By</th></tr></thead>
           <tbody id="payoutBody">{(payouts.data ?? []).length === 0 ? <tr><td colSpan={5} className="text-center text-sm text-muted py-6">No tips handed over yet</td></tr> : (payouts.data ?? []).map((p) => (
             <tr key={p.id}><td data-label="" className="cell-title text-xs">{p.paidOn}</td><td data-label="Staff" className="font-medium text-fg">{p.staffName}</td><td data-label="Amount" className="md:text-right font-semibold">{rupee2(p.amount)}</td><td data-label="Note" className="text-muted text-xs">{p.note || '-'}</td><td data-label="By" className="text-muted text-xs">{p.createdBy || '-'}</td></tr>))}</tbody></table></div>
+      )}
       {pay && <PayDialog key={pay.staffId} row={pay} onClose={() => setPay(null)} />}
     </div>
   );

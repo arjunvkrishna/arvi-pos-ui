@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSession } from '../../api/session';
+import { hasFeature } from '../../api/roles';
 import { showToast } from '../../components/toast';
 import { PageHeader, SegmentedTabs } from '../../components/ui';
 import { deleteInventoryItem, type ExpiryBatch, type InventoryItem } from './api';
@@ -19,8 +20,11 @@ export function InventoryPage() {
   const me = useSession((s) => s.user)!;
   const canManage = me.role === 'ADMIN' || me.role === 'MANAGER';
   const inv = useInventory();
-  const expiry = useExpiry();
+  // stock counts, expiry and the reorder list are the stock-control module; basic stock, cost alerts and history are in every plan
+  const stockControl = hasFeature(me, 'STOCK_CONTROL');
+  const expiry = useExpiry(stockControl);
   const [view, setView] = useState<'stock' | 'reorder' | 'count' | 'costs' | 'history'>('stock');
+  const shownView = !stockControl && (view === 'reorder' || view === 'count') ? 'stock' : view;
   const [category, setCategory] = useState<CategoryFilter>('Stock');
   const [query, setQuery] = useState('');
   const [modal, setModal] = useState<Modal>(null);
@@ -44,14 +48,15 @@ export function InventoryPage() {
 
       {canManage && (
         <div className="max-w-full overflow-x-auto no-scrollbar">
-          <SegmentedTabs label="Inventory view" value={view} onChange={setView} options={[
-            { value: 'stock', label: 'Stock', id: 'inv-subtab-stock' }, { value: 'reorder', label: 'Reorder list', id: 'inv-subtab-reorder' },
-            { value: 'count', label: 'Stock count', id: 'inv-subtab-count' }, { value: 'costs', label: 'Cost alerts', id: 'inv-subtab-costs' }, { value: 'history', label: 'History', id: 'inv-subtab-history' },
+          <SegmentedTabs label="Inventory view" value={shownView} onChange={setView} options={[
+            { value: 'stock', label: 'Stock', id: 'inv-subtab-stock' },
+            ...(stockControl ? [{ value: 'reorder' as const, label: 'Reorder list', id: 'inv-subtab-reorder' }, { value: 'count' as const, label: 'Stock count', id: 'inv-subtab-count' }] : []),
+            { value: 'costs', label: 'Cost alerts', id: 'inv-subtab-costs' }, { value: 'history', label: 'History', id: 'inv-subtab-history' },
           ]} />
         </div>
       )}
 
-      {view === 'history' && canManage ? <HistoryView items={items} /> : view === 'reorder' && canManage ? <ReorderView /> : view === 'count' && canManage ? <CountView canApply /> : view === 'costs' && canManage ? <CostView /> : (
+      {shownView === 'history' && canManage ? <HistoryView items={items} /> : shownView === 'reorder' && canManage ? <ReorderView /> : shownView === 'count' && canManage ? <CountView canApply /> : shownView === 'costs' && canManage ? <CostView /> : (
         <StockView items={items} loading={inv.isPending} canManage={canManage} category={category} onCategory={setCategory} query={query} onQuery={setQuery}
           onIssue={(i) => setModal({ kind: 'issue', item: i })} onAlert={(i) => setModal({ kind: 'alert', item: i })}
           onEdit={(i) => setModal({ kind: 'item', item: i })} onDelete={onDelete}

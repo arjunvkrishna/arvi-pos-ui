@@ -7,7 +7,9 @@ import { Badge, EmptyState, Field, PageHeader, Skeleton } from '../../components
 import { copyText } from '../../lib/clipboard';
 import { useSafeMutation as useMutation } from '../../lib/useSafeMutation';
 import { cafesKey, changePlatformPassword, createCafe, fetchCafes, fetchStats, revealBridgeToken, rotateBridgeToken, statsKey, updateCafe, type Cafe, type NewCafe } from './api';
-import { CAFE_CODE, passwordProblem, PLANS, suggestCode } from './rules';
+import { limitText } from '../../api/roles';
+import type { PlanName } from '../../api/types';
+import { CAFE_CODE, MODULES, passwordProblem, PLAN_LIMITS, PLANS, planIncludes, planLimitsText, suggestCode } from './rules';
 
 const inr = (n?: number) => `₹${(n ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
@@ -53,9 +55,9 @@ export function PlatformPage() {
               {cafes.data.map((c) => (
                 <tr key={c.id} data-testid="cafe-row" className="border-b border-line last:border-0">
                   <td className="p-3"><div className="font-medium text-fg">{c.name}</div><div className="text-xs text-muted font-mono">{c.code}</div></td>
-                  <td className="p-3">{c.subscriptionPlan}</td>
-                  <td className="p-3">{c.outletsCount ?? 0} / {c.maxOutlets}</td>
-                  <td className="p-3">{c.usersCount ?? 0}</td>
+                  <td className="p-3"><Badge tone="neutral">{c.subscriptionPlan}</Badge></td>
+                  <td className="p-3">{c.outletsCount ?? 0} / {limitText(c.maxOutlets)}</td>
+                  <td className="p-3">{c.usersCount ?? 0}{c.maxUsers ? ` / ${limitText(c.maxUsers)}` : ''}</td>
                   <td className="p-3">{inr(c.totalGmv)}</td>
                   <td className="p-3"><Badge tone={c.status === 'ACTIVE' ? 'ok' : c.status === 'SUSPENDED' ? 'warn' : 'danger'}>{c.status}</Badge></td>
                   <td className="p-3"><div className="flex justify-end gap-1.5 flex-wrap">
@@ -107,8 +109,9 @@ function NewCafeDialog({ onClose, onCreated }: { onClose: () => void; onCreated:
           <Field id="cafeCodeNew" label="Cafe code" hint="Staff type it to sign in. It cannot be changed later."><input id="cafeCodeNew" className="input font-mono" value={f.code} onChange={(e) => set({ code: e.target.value.toLowerCase(), codeEdited: true })} /></Field>
           <Field id="cafeMailNew" label="Contact email"><input id="cafeMailNew" type="email" className="input" value={f.contactEmail} onChange={(e) => set({ contactEmail: e.target.value })} /></Field>
           <Field id="cafePhoneNew" label="Contact phone"><input id="cafePhoneNew" className="input" value={f.contactPhone} onChange={(e) => set({ contactPhone: e.target.value })} /></Field>
-          <Field id="cafePlanNew" label="Plan"><select id="cafePlanNew" className="input" value={f.subscriptionPlan} onChange={(e) => set({ subscriptionPlan: e.target.value })}>{PLANS.map((p) => <option key={p}>{p}</option>)}</select></Field>
-          <Field id="cafeMaxNew" label="Branches allowed"><input id="cafeMaxNew" type="number" min={1} className="input" value={f.maxOutlets} onChange={(e) => set({ maxOutlets: Math.max(1, Number(e.target.value) || 1) })} /></Field>
+          <Field id="cafePlanNew" label="Plan"><select id="cafePlanNew" className="input" value={f.subscriptionPlan} onChange={(e) => set({ subscriptionPlan: e.target.value, maxOutlets: PLAN_LIMITS[e.target.value as PlanName].branches })}>{PLANS.map((p) => <option key={p}>{p}</option>)}</select></Field>
+          <PlanSummary plan={f.subscriptionPlan as PlanName} />
+          <Field id="cafeMaxNew" label="Branches allowed" hint="999 or more means no limit."><input id="cafeMaxNew" type="number" min={1} className="input" value={f.maxOutlets} onChange={(e) => set({ maxOutlets: Math.max(1, Number(e.target.value) || 1) })} /></Field>
         </div>
         <fieldset className="rounded-lg border border-line p-3 space-y-3"><legend className="px-1 text-xs font-medium text-muted">Owner account</legend>
           <div className="grid sm:grid-cols-3 gap-3">
@@ -134,11 +137,32 @@ function PlanDialog({ cafe, onClose, onSaved }: { cafe: Cafe; onClose: () => voi
   return (
     <Dialog id="planModal" open onClose={onClose} title={`${cafe.name}: plan`} size="sm">
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
-        <Field id="planSel" label="Plan"><select id="planSel" className="input" value={plan} onChange={(e) => setPlan(e.target.value)}>{PLANS.map((p) => <option key={p}>{p}</option>)}</select></Field>
-        <Field id="planMax" label="Branches allowed" hint={`${cafe.outletsCount ?? 0} in use now.`}><input id="planMax" type="number" min={Math.max(1, cafe.outletsCount ?? 1)} className="input" value={max} onChange={(e) => setMax(Number(e.target.value) || 1)} /></Field>
+        <Field id="planSel" label="Plan"><select id="planSel" className="input" value={plan} onChange={(e) => { setPlan(e.target.value); setMax(Math.max(PLAN_LIMITS[e.target.value as PlanName].branches, cafe.outletsCount ?? 1)); }}>{PLANS.map((p) => <option key={p}>{p}</option>)}</select></Field>
+        <PlanSummary plan={plan as PlanName} />
+        <Field id="planMax" label="Branches allowed" hint={`${cafe.outletsCount ?? 0} in use now. 999 or more means no limit.`}><input id="planMax" type="number" min={Math.max(1, cafe.outletsCount ?? 1)} className="input" value={max} onChange={(e) => setMax(Number(e.target.value) || 1)} /></Field>
         <div className="flex justify-end gap-2"><button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button><button type="submit" disabled={save.isPending} className="btn btn-primary">Save</button></div>
       </form>
     </Dialog>
+  );
+}
+
+/** What a plan gives: its two limits and which modules are in or out, so the choice is made with the facts in front of you. */
+function PlanSummary({ plan }: { plan: PlanName }) {
+  return (
+    <div className="sm:col-span-2 rounded-lg border border-line bg-subtle/60 p-3 text-xs space-y-2" data-testid="plan-summary">
+      <p className="font-medium text-fg">{plan}: {planLimitsText(plan)}</p>
+      <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1">
+        {MODULES.map((m) => {
+          const on = planIncludes(plan, m);
+          return (
+            <li key={m.id} className={on ? 'text-fg' : 'text-muted line-through decoration-muted/50'}>
+              <i className={`fa-solid ${on ? 'fa-check text-ok' : 'fa-xmark text-muted'} w-4`} />{m.label}{!on && <span className="no-underline"> ({m.plan})</span>}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-muted">Also in every plan: till and tables, kitchen display, bills, menu, basic stock, analytics, printing.</p>
+    </div>
   );
 }
 

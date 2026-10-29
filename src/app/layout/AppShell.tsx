@@ -13,11 +13,13 @@ import { startConnectionMonitor, useConnection } from '../../offline/connection'
 import { OfflineBanner } from '../../offline/OfflineBanner';
 import { useOutbox } from '../../offline/outboxStore';
 import { useUi } from '../ui';
+import { usePlanSync } from '../usePlanSync';
 import { Header } from './Header';
 import { BottomNav, MobileDrawer, Sidebar } from './Navigation';
 
 /** Everything around a screen: sidebar (desktop) or drawer + bottom bar (phone), top bar, global dialogs. */
 export function AppShell() {
+  usePlanSync();
   const pwaOpen = useUi((s) => s.pwaOpen);
   const ui = useUi((s) => s.set);
   const qc = useQueryClient();

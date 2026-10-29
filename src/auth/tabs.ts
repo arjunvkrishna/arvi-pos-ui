@@ -1,5 +1,5 @@
-import type { Session } from '../api/types';
-import { canManageBranchSettings, canManageMenu, isCafeWide, isManagement, isOwner } from '../api/roles';
+import type { FeatureId, Session } from '../api/types';
+import { canManageBranchSettings, canManageMenu, hasFeature, isCafeWide, isManagement, isOwner } from '../api/roles';
 
 export const TAB_IDS = ['pos', 'kds', 'bills', 'customers', 'owner-dashboard', 'scheduling', 'documents', 'menu', 'inventory', 'staff', 'expenses', 'analytics', 'attendance', 'audit', 'telegram', 'users', 'suppliers', 'gst', 'stocklinks', 'outlets', 'settings', 'cafes'] as const;
 export type TabId = (typeof TAB_IDS)[number];
@@ -16,6 +16,8 @@ export interface TabDef {
 // Every rule below mirrors the server's rule for that screen's data, so no tab leads to a page the server will refuse.
 const cafeScreen = (rule: (u: Session) => boolean) => (u: Session) => !u.platform && rule(u);
 const management = cafeScreen(isManagement);
+/** A screen that belongs to a module: shown only when the person may see it AND the cafe's plan includes the module. */
+const inPlan = (feature: FeatureId, rule: (u: Session) => boolean) => (u: Session) => hasFeature(u, feature) && rule(u);
 export const canTakeOrders = (u: Session) => isManagement(u) || u.canTakeOrders !== false;
 export const canManageInventory = (u: Session) => isManagement(u) || u.canManageInventory === true;
 export const canPrintBill = (u: Session) => isManagement(u) || u.canPrintBill === true;
@@ -27,20 +29,20 @@ export const TABS: TabDef[] = [
   { id: 'pos', label: 'Table Orders & POS', icon: 'fa-cash-register', short: 'POS', visible: cafeScreen(canTakeOrders) },
   { id: 'kds', label: 'Kitchen Display', icon: 'fa-kitchen-set', short: 'Kitchen', visible: cafeScreen(seesKitchen) },
   { id: 'bills', label: 'Bill Log & Printing', icon: 'fa-file-invoice-dollar', short: 'Bills', visible: management },
-  { id: 'customers', label: 'Customers & CRM', icon: 'fa-user-group', short: 'CRM', visible: management },
+  { id: 'customers', label: 'Customers & CRM', icon: 'fa-user-group', short: 'CRM', visible: inPlan('CRM', management) },
   { id: 'owner-dashboard', label: 'Owner Dashboard', icon: 'fa-gauge-high', short: 'Owner', visible: management },
-  { id: 'scheduling', label: 'Shift Scheduling & Tips', icon: 'fa-calendar-days', short: 'Shifts', visible: management },
-  { id: 'documents', label: 'Documents & SOPs', icon: 'fa-folder-open', short: 'Docs', visible: management },
+  { id: 'scheduling', label: 'Shift Scheduling & Tips', icon: 'fa-calendar-days', short: 'Shifts', visible: inPlan('SCHEDULING', management) },
+  { id: 'documents', label: 'Documents & SOPs', icon: 'fa-folder-open', short: 'Docs', visible: inPlan('DOCUMENTS', management) },
   { id: 'menu', label: 'Menu & Pricing', icon: 'fa-utensils', short: 'Menu', visible: management },
   { id: 'inventory', label: 'Inventory', icon: 'fa-boxes-stacked', short: 'Stock', visible: cafeScreen(canManageInventory) },
-  { id: 'staff', label: 'Staff & Payroll', icon: 'fa-users-gear', short: 'Staff', visible: management },
-  { id: 'expenses', label: 'Cafe Expenses & EMI', icon: 'fa-receipt', short: 'Cafe', visible: management },
+  { id: 'staff', label: 'Staff & Payroll', icon: 'fa-users-gear', short: 'Staff', visible: inPlan('STAFF_PAYROLL', management) },
+  { id: 'expenses', label: 'Cafe Expenses & EMI', icon: 'fa-receipt', short: 'Cafe', visible: inPlan('SUPPLIERS_EXPENSES', management) },
   { id: 'analytics', label: 'Analytics', icon: 'fa-chart-pie', short: 'Analytics', visible: management },
-  { id: 'attendance', label: 'Attendance & Leaves', icon: 'fa-calendar-check', short: 'Leaves', visible: cafeScreen(() => true) },
-  { id: 'audit', label: 'Audit Log', icon: 'fa-shield-halved', short: 'Audit', visible: cafeScreen(isOwner) },
-  { id: 'telegram', label: 'Telegram Alerts', icon: 'fa-paper-plane', short: 'Telegram', visible: cafeScreen(isCafeWide) },
+  { id: 'attendance', label: 'Attendance & Leaves', icon: 'fa-calendar-check', short: 'Leaves', visible: inPlan('STAFF_PAYROLL', cafeScreen(() => true)) },
+  { id: 'audit', label: 'Audit Log', icon: 'fa-shield-halved', short: 'Audit', visible: inPlan('AUDIT', cafeScreen(isOwner)) },
+  { id: 'telegram', label: 'Telegram Alerts', icon: 'fa-paper-plane', short: 'Telegram', visible: inPlan('TELEGRAM', cafeScreen(isCafeWide)) },
   { id: 'users', label: 'User Accounts', icon: 'fa-id-badge', short: 'User', visible: management },
-  { id: 'suppliers', label: 'Suppliers', icon: 'fa-truck', short: 'Suppliers', visible: management },
+  { id: 'suppliers', label: 'Suppliers', icon: 'fa-truck', short: 'Suppliers', visible: inPlan('SUPPLIERS_EXPENSES', management) },
   { id: 'gst', label: 'GST Management', icon: 'fa-percent', short: 'GST', visible: cafeScreen(isCafeWide) },
   // Recipes are shared by every branch and change what stock a sale uses, so editing them needs the menu right.
   { id: 'stocklinks', label: 'Stock Links', icon: 'fa-diagram-project', short: 'Links', visible: cafeScreen((u) => isManagement(u) && canManageMenu(u)) },

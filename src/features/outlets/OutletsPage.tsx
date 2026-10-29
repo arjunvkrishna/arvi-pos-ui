@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../../api/session';
 import { Dialog } from '../../components/Dialog';
 import { showToast } from '../../components/toast';
+import { atLimit } from '../../api/roles';
+import { PlanUsage } from '../shell/PlanUsage';
 import { Badge, EmptyState, Field, PageHeader, Skeleton, Switch } from '../../components/ui';
 import { copyText } from '../../lib/clipboard';
 import { useSafeMutation as useMutation } from '../../lib/useSafeMutation';
@@ -14,18 +16,21 @@ const EMPTY: BranchInput = { name: '', code: '', address: '', phone: '', gstNumb
 /** Branches of the cafe: owner and general manager open, edit and close them and compare how each one trades. */
 export function OutletsPage() {
   const cafe = useSession((s) => s.user?.tenantCode ?? '');
+  const plan = useSession((s) => s.user?.plan);
   const qc = useQueryClient();
   const branches = useQuery({ queryKey: branchesKey, queryFn: fetchBranches });
   const franchise = useQuery({ queryKey: franchiseKey, queryFn: fetchFranchise });
   const [editing, setEditing] = useState<Branch | 'new' | null>(null);
 
+  const full = !!plan && !!branches.data && atLimit(branches.data.length, plan.maxBranches);
   const statsOf = (id: number) => franchise.data?.outlets.find((o) => o.outletId === id);
   const refresh = () => { void qc.invalidateQueries({ queryKey: branchesKey }); void qc.invalidateQueries({ queryKey: franchiseKey }); };
 
   return (
     <section id="tab-outlets" data-testid="tab-outlets" className="space-y-5">
       <PageHeader title="Branches" description="Every branch of your cafe. Staff work in one branch; owners and general managers can switch between them from the top bar."
-        actions={<button type="button" id="btnAddBranch" onClick={() => setEditing('new')} className="btn btn-primary"><i className="fa-solid fa-plus" />Add branch</button>} />
+        actions={<button type="button" id="btnAddBranch" onClick={() => setEditing('new')} disabled={full} title={full ? 'Your plan\'s branch limit is reached' : undefined} className="btn btn-primary"><i className="fa-solid fa-plus" />Add branch</button>} />
+      {plan && branches.data && <PlanUsage plan={plan} what="branches" used={branches.data.length} limit={plan.maxBranches} />}
 
       {franchise.data && (
         <div className="grid grid-cols-3 gap-3">

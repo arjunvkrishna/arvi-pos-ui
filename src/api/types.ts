@@ -6,6 +6,21 @@ export type Role = 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
 
 export type RealRole = 'SUPER_ADMIN' | 'ADMIN' | 'CAFE_ADMIN' | 'GENERAL_MANAGER' | 'MANAGER' | 'CASHIER' | 'CAPTAIN' | 'KITCHEN' | 'EMPLOYEE';
 
+/** Modules a plan can switch on (the names the server uses). Everything else belongs to every plan. */
+export type FeatureId =
+  | 'STOCK_CONTROL' | 'SUPPLIERS_EXPENSES' | 'CRM' | 'STAFF_PAYROLL' | 'TELEGRAM' | 'EXPORTS'
+  | 'CAMPAIGNS' | 'SCHEDULING' | 'ACCOUNTING' | 'DOCUMENTS' | 'AUDIT';
+
+export type PlanName = 'STARTER' | 'PRO' | 'ENTERPRISE';
+
+/** The cafe's plan as the server reports it: limits (999 = unlimited) and the modules that are switched on. */
+export interface PlanInfo {
+  name: PlanName;
+  maxBranches: number;
+  maxLogins: number;
+  features: FeatureId[];
+}
+
 /** The login response as the server sends it, with the role mapped to a tier (see api/roles.ts), stored as-is under `arvi_user`. */
 export interface Session {
   token: string;
@@ -34,6 +49,8 @@ export interface Session {
   outletCode?: string | null;
   /** A branch an owner or general manager picked to work in; sent as X-Outlet-Id. Null = the whole cafe. */
   selectedOutletId?: number | null;
+  /** The cafe's plan. Missing in a session saved before plans existed: then nothing is hidden and the server decides. */
+  plan?: PlanInfo;
   message?: string;
 }
 
