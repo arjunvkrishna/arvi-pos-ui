@@ -24,7 +24,7 @@ export const PLAN_LIMITS: Record<PlanName, { branches: number; logins: number }>
 export const MODULES: { id: FeatureId; label: string; plan: PlanName }[] = [
   { id: 'STOCK_CONTROL', label: 'Stock counts, expiry and reorder lists', plan: 'PRO' },
   { id: 'SUPPLIERS_EXPENSES', label: 'Suppliers, expenses and budgets', plan: 'PRO' },
-  { id: 'CRM', label: 'Customers, loyalty, gift cards and coupons', plan: 'PRO' },
+  { id: 'CRM', label: 'Customers and loyalty points', plan: 'PRO' },
   { id: 'STAFF_PAYROLL', label: 'Staff records, attendance, leave and payroll', plan: 'PRO' },
   { id: 'TELEGRAM', label: 'Telegram alerts and daily reports', plan: 'PRO' },
   { id: 'EXPORTS', label: 'Report exports', plan: 'PRO' },

@@ -25,6 +25,8 @@ export type PrinterType = 'BILL' | 'KOT' | 'JUICE_KOT';
 /** A ticket the server holds for this phone to print itself. */
 export interface DevicePrintJob { jobId: string; printType: string; host: string; port: number; dataBase64: string }
 export interface PrintResponse { jobId?: string; status?: string; success?: boolean; host?: string; port?: number; message?: string; warning?: string; deviceJobs?: DevicePrintJob[] }
+/** How to divide a bill by items: one entry per new bill, each listing how many of which line go on it. */
+export interface SplitBillRequest { portions: { items: { billItemId: number; quantity: number }[] }[] }
 export interface JobStatus { status: string; lastErrorMessage?: string | null }
 
 export const printerKey = ['printer'] as const;
@@ -61,16 +63,20 @@ export const reportDeviceResult = (jobId: string, body: { outcome: string; messa
  * Every ticket goes through here. In the Android app on the cafe Wi-Fi the phone prints straight to the printer; otherwise
  * (a browser, other Wi-Fi, mobile data, printer not answering) it is the normal cloud print.
  */
-export async function printVia(path: string, init: { headers?: Record<string, string> } = {}): Promise<PrintResponse> {
+export async function printVia(path: string, init: { headers?: Record<string, string>; body?: unknown } = {}): Promise<PrintResponse> {
   const native = nativePrinter();
   const deps = { native, configuredSsids, report: reportDeviceResult };
   if (!(await shouldPrintFromPhone(deps))) return api<PrintResponse>(path, { method: 'POST', ...init });
-  const res = await api<PrintResponse>(path, { method: 'POST', headers: { ...init.headers, 'X-Print-Route': 'DEVICE', 'X-Device-Id': deviceId() } });
+  const res = await api<PrintResponse>(path, { method: 'POST', body: init.body, headers: { ...init.headers, 'X-Print-Route': 'DEVICE', 'X-Device-Id': deviceId() } });
   return res.deviceJobs?.length ? deliverFromPhone(res, deps) : res;
 }
 
 export const printTestPage = (type: PrinterType) => printVia(`/printer/test?type=${encodeURIComponent(type)}`);
-export const printBill = (id: number) => printVia(`/printer/print-bill/${id}`);
+/** `redeemPoints` prints the bill as it will be once that many loyalty points are used (nothing is redeemed by printing). */
+export const printBill = (id: number, redeemPoints?: number) => printVia(`/printer/print-bill/${id}${redeemPoints ? `?redeemPoints=${redeemPoints}` : ''}`);
+/** One printed bill per group of items; see SplitBillDialog. */
+export const printBillSplit = (id: number, body: SplitBillRequest, idempotencyKey?: string) =>
+  printVia(`/printer/print-bill-split/${id}`, { body, headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined });
 export const printKot = (id: number, idempotencyKey: string) => printVia(`/printer/print-kot/${id}`, { headers: { 'Idempotency-Key': idempotencyKey } });
 export const jobStatus = (jobId: string) => api<JobStatus>(`/printer/jobs/${jobId}/status`);
 export const markBillPrinted = (id: number) => api(`/bills/${id}/print`, { method: 'POST' });

@@ -10,14 +10,10 @@ import {
   createCustomer,
   updateCustomer,
   fetchLoyaltyLedger,
-  fetchGiftCards,
-  issueGiftCard,
   customersKey,
-  giftCardsKey,
   type Customer,
   type CustomerInput,
 } from './api';
-import { CouponsTab } from './CouponsTab';
 import { CampaignsTab } from './CampaignsTab';
 import { LoyaltyRulesBar } from './LoyaltyRules';
 import { ExpiryChip } from './ExpiryChip';
@@ -25,24 +21,17 @@ import { ExpiryChip } from './ExpiryChip';
 export function CustomersPage() {
   const qc = useQueryClient();
   const campaignsInPlan = useSession((u) => (u.user ? hasFeature(u.user, 'CAMPAIGNS') : true));   // marketing campaigns are an ENTERPRISE module
-  const [tab, setTab] = useState<'customers' | 'giftcards' | 'coupons' | 'campaigns'>('customers');
+  const [tab, setTab] = useState<'customers' | 'campaigns'>('customers');
   const [query, setQuery] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [giftCardDialogOpen, setGiftCardDialogOpen] = useState(false);
 
   // Queries
   const customersQ = useQuery({
     queryKey: [...customersKey, query],
     queryFn: () => fetchCustomers(query),
-  });
-
-  const giftCardsQ = useQuery({
-    queryKey: giftCardsKey,
-    queryFn: fetchGiftCards,
-    enabled: tab === 'giftcards',
   });
 
   const loyaltyQ = useQuery({
@@ -52,7 +41,6 @@ export function CustomersPage() {
   });
 
   const customers = useMemo(() => customersQ.data ?? [], [customersQ.data]);
-  const giftCards = useMemo(() => giftCardsQ.data ?? [], [giftCardsQ.data]);
 
   const selectedCustomer = useMemo(
     () => customers.find((c) => c.id === selectedCustomerId) ?? null,
@@ -65,16 +53,11 @@ export function CustomersPage() {
     [customers]
   );
 
-  const totalGiftCardBalance = useMemo(
-    () => giftCards.reduce((sum, g) => sum + (g.status === 'ACTIVE' ? Number(g.currentBalance || 0) : 0), 0),
-    [giftCards]
-  );
-
   return (
     <section id="tab-customers" data-testid="tab-customers" className="space-y-4">
       <PageHeader
-        title="Customer CRM & Gift Cards"
-        description="Manage customer loyalty points, dietary preferences, DPDP compliance, and prepaid gift cards."
+        title="Customer CRM & Loyalty"
+        description="Manage customer loyalty points, dietary preferences and DPDP compliance."
         actions={
           <div className="flex gap-2">
             <button
@@ -89,20 +72,11 @@ export function CustomersPage() {
               <i className="fa-solid fa-user-plus mr-1" />
               New Customer
             </button>
-            <button
-              type="button"
-              id="btnIssueGiftCard"
-              onClick={() => setGiftCardDialogOpen(true)}
-              className="btn btn-secondary"
-            >
-              <i className="fa-solid fa-gift mr-1" />
-              Issue Gift Card
-            </button>
           </div>
         }
       />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:max-w-md">
         <div className="card p-3.5 space-y-1">
           <span className="text-xs uppercase tracking-wider text-muted font-medium">Total Customers</span>
           <p className="text-2xl font-bold text-fg">{customers.length}</p>
@@ -110,16 +84,6 @@ export function CustomersPage() {
         <div className="card p-3.5 space-y-1">
           <span className="text-xs uppercase tracking-wider text-muted font-medium">Loyalty Pool</span>
           <p className="text-2xl font-bold text-amber-500">⭐ {totalPoints.toLocaleString()} pts</p>
-        </div>
-        <div className="card p-3.5 space-y-1">
-          <span className="text-xs uppercase tracking-wider text-muted font-medium">Active Gift Cards</span>
-          <p className="text-2xl font-bold text-fg">
-            {giftCards.filter((g) => g.status === 'ACTIVE').length}
-          </p>
-        </div>
-        <div className="card p-3.5 space-y-1">
-          <span className="text-xs uppercase tracking-wider text-muted font-medium">Gift Card Float</span>
-          <p className="text-2xl font-bold text-emerald-600">₹{totalGiftCardBalance.toFixed(2)}</p>
         </div>
       </div>
 
@@ -130,8 +94,6 @@ export function CustomersPage() {
           onChange={(v) => setTab(v as typeof tab)}
           options={[
             { value: 'customers', label: `Customers (${customers.length})`, id: 'tabModeCustomers' },
-            { value: 'giftcards', label: `Gift Cards (${giftCards.length})`, id: 'tabModeGiftCards' },
-            { value: 'coupons', label: 'Coupons', id: 'tabModeCoupons' },
             ...(campaignsInPlan ? [{ value: 'campaigns' as const, label: 'Campaigns', id: 'tabModeCampaigns' }] : []),
           ]}
         />
@@ -262,76 +224,6 @@ export function CustomersPage() {
         </div>
       )}
 
-      {tab === 'giftcards' && (
-        <div className="card overflow-hidden">
-          {giftCardsQ.isLoading ? (
-            <div className="p-6">
-              <Skeleton rows={6} />
-            </div>
-          ) : giftCards.length === 0 ? (
-            <div className="p-8">
-              <EmptyState
-                icon="fa-solid fa-gift"
-                title="No gift cards issued"
-                hint="Issue physical or digital gift cards to your customers."
-              />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="rtable">
-                <thead>
-                  <tr>
-                    <th>Card Code</th>
-                    <th>Current Balance</th>
-                    <th>Initial Value</th>
-                    <th>Tender Mode</th>
-                    <th>Customer</th>
-                    <th>Expires At</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {giftCards.map((g) => (
-                    <tr key={g.id} className="hover:bg-subtle/50 transition">
-                      <td data-label="" className="cell-title">
-                        <span className="font-mono font-semibold text-brand-text tracking-wider bg-brand/10 px-2 py-0.5 rounded border border-brand/20">
-                          {g.code}
-                        </span>
-                      </td>
-                      <td data-label="Balance" className="font-bold text-fg">₹{Number(g.currentBalance).toFixed(2)}</td>
-                      <td data-label="Initial" className="text-muted">₹{Number(g.initialBalance).toFixed(2)}</td>
-                      <td data-label="Tender" className="">
-                        <Badge tone="neutral">{g.paymentMode}</Badge>
-                      </td>
-                      <td data-label="Customer" className="text-fg font-medium">
-                        {g.issuedToCustomerName || 'Walk-in Guest'}
-                      </td>
-                      <td data-label="Expires" className="text-muted text-xs">
-                        {g.expiresAt ? g.expiresAt : 'Never'}
-                      </td>
-                      <td data-label="Status" className="">
-                        <Badge
-                          tone={
-                            g.status === 'ACTIVE'
-                              ? 'ok'
-                              : g.status === 'EXHAUSTED'
-                              ? 'neutral'
-                              : 'danger'
-                          }
-                        >
-                          {g.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === 'coupons' && <CouponsTab />}
       {tab === 'campaigns' && campaignsInPlan && <CampaignsTab />}
 
       {/* Customer Detail & Loyalty History Modal */}
@@ -454,17 +346,6 @@ export function CustomersPage() {
         />
       )}
 
-      {/* Issue Gift Card Dialog */}
-      {giftCardDialogOpen && (
-        <IssueGiftCardDialog
-          customers={customers}
-          onClose={() => setGiftCardDialogOpen(false)}
-          onSuccess={() => {
-            setGiftCardDialogOpen(false);
-            void qc.invalidateQueries({ queryKey: giftCardsKey });
-          }}
-        />
-      )}
     </section>
   );
 }
@@ -636,137 +517,6 @@ function CustomerEditDialog({
           </button>
           <button type="submit" disabled={mutation.isPending} className="btn btn-primary">
             {mutation.isPending ? 'Saving...' : customer ? 'Save Changes' : 'Create Customer'}
-          </button>
-        </div>
-      </form>
-    </Dialog>
-  );
-}
-
-function IssueGiftCardDialog({
-  customers,
-  onClose,
-  onSuccess,
-}: {
-  customers: Customer[];
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
-  const [balance, setBalance] = useState('500');
-  const [paymentMode, setPaymentMode] = useState('CASH');
-  const [customerId, setCustomerId] = useState<number | null>(null);
-  const [expiresAt, setExpiresAt] = useState('');
-
-  const mutation = useMutation({
-    mutationFn: () => {
-      const amt = parseFloat(balance);
-      if (isNaN(amt) || amt <= 0) {
-        throw new Error('Please enter a valid gift card amount.');
-      }
-      return issueGiftCard({
-        initialBalance: amt,
-        paymentMode,
-        customerId: customerId || undefined,
-        expiresAt: expiresAt || undefined,
-      });
-    },
-    onSuccess: (card) => {
-      showToast(`Issued Gift Card ${card.code} for ₹${card.initialBalance}`, 'success');
-      onSuccess();
-    },
-    onError: (err: Error) => {
-      showToast(err.message || 'Failed to issue gift card', 'error');
-    },
-  });
-
-  return (
-    <Dialog
-      id="issueGiftCardModal"
-      open
-      onClose={onClose}
-      size="md"
-      title="Issue New Gift Card"
-      description="Create a prepaid gift card redeemable against bills."
-    >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          mutation.mutate();
-        }}
-        className="space-y-4"
-      >
-        <Field id="gcAmount" label="Card Amount (₹) *">
-          <div className="space-y-2">
-            <input
-              id="gcAmount"
-              type="number"
-              min="1"
-              step="any"
-              value={balance}
-              onChange={(e) => setBalance(e.target.value)}
-              className="input font-bold text-lg"
-              required
-            />
-            <div className="flex gap-2">
-              {[250, 500, 1000, 2000].map((v) => (
-                <button
-                  type="button"
-                  key={v}
-                  onClick={() => setBalance(String(v))}
-                  className="btn btn-secondary btn-sm"
-                >
-                  ₹{v}
-                </button>
-              ))}
-            </div>
-          </div>
-        </Field>
-
-        <Field id="gcPaymentMode" label="Payment Tender Received *">
-          <select
-            id="gcPaymentMode"
-            value={paymentMode}
-            onChange={(e) => setPaymentMode(e.target.value)}
-            className="input"
-          >
-            <option value="CASH">Cash (Logged in Cash Drawer)</option>
-            <option value="UPI">UPI / QR</option>
-            <option value="CARD">Card Swipe</option>
-          </select>
-        </Field>
-
-        <Field id="gcCustomer" label="Issue To Customer (Optional)">
-          <select
-            id="gcCustomer"
-            value={customerId || ''}
-            onChange={(e) => setCustomerId(e.target.value ? Number(e.target.value) : null)}
-            className="input"
-          >
-            <option value="">Walk-in Guest / Not Linked</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.phone})
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field id="gcExpiresAt" label="Expiry Date (Optional)" hint="Leave blank for lifetime validity">
-          <input
-            id="gcExpiresAt"
-            type="date"
-            value={expiresAt}
-            onChange={(e) => setExpiresAt(e.target.value)}
-            className="input"
-          />
-        </Field>
-
-        <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="btn btn-secondary">
-            Cancel
-          </button>
-          <button type="submit" disabled={mutation.isPending} className="btn btn-primary">
-            {mutation.isPending ? 'Issuing...' : 'Issue Gift Card'}
           </button>
         </div>
       </form>

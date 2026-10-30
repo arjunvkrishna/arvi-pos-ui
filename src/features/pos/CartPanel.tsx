@@ -1,41 +1,15 @@
-import { canCancelOrder } from '../../api/roles';
+import { canCancelOrder, hasFeature } from '../../api/roles';
 import { useSession } from '../../api/session';
 import type { Bill } from '../bills/types';
 import { Badge } from '../../components/ui';
 import { useBump } from '../../components/useBump';
+import { BillLines } from './BillLines';
+import { dishCount, formatModifiersSnapshot } from './billText';
 import { VegDot } from './DishGrid';
 import { discountPending, statusLabel, type CartLine, type Draft, type Gates, type Mode, type Totals } from './rules';
 
 const inr = (n: number) => `₹${n.toFixed(2)}`;
 
-function formatModifiersSnapshot(modJson?: string | null, comboJson?: string | null): string {
-  const parts: string[] = [];
-  if (modJson) {
-    try {
-      const parsed = JSON.parse(modJson);
-      if (Array.isArray(parsed)) {
-        parsed.forEach((m: { name?: string; priceAdjustment?: number; price?: number }) => {
-          const p = m.priceAdjustment ?? m.price ?? 0;
-          parts.push(p > 0 ? `${m.name} (+₹${p})` : `${m.name}`);
-        });
-      }
-    } catch { /* best effort */ }
-  }
-  if (comboJson) {
-    try {
-      const parsed = JSON.parse(comboJson);
-      if (Array.isArray(parsed)) {
-        parsed.forEach((cg: { selectedItems?: { dishName?: string; additionalPrice?: number }[] }) => {
-          cg.selectedItems?.forEach((it) => {
-            const p = it.additionalPrice ?? 0;
-            parts.push(p > 0 ? `${it.dishName} (+₹${p})` : `${it.dishName}`);
-          });
-        });
-      }
-    } catch { /* best effort */ }
-  }
-  return parts.join(', ');
-}
 const MODES: { mode: Mode; id: string; label: string; icon: string }[] = [
   { mode: 'TABLE', id: 'btnOrderLocTable', label: 'Table', icon: 'fa-chair' },
   { mode: 'OUTDOOR', id: 'btnOrderLocOutdoor', label: 'Outdoor', icon: 'fa-tree' },
@@ -56,6 +30,8 @@ export function CartPanel(v: CartVm) {
   const user = useSession((s) => s.user);
   // Cancelling a saved order is a right of its own (managers always have it); clearing a cart that is not saved yet is for everyone.
   const mayCancel = !v.order || (!!user && canCancelOrder(user));
+  // loyalty members belong to the customers module: a plan without it takes no phone number with the order
+  const loyaltyInPlan = !user || hasFeature(user, 'CRM');
   const { order, draft, totals, gates, mode, isManager, canPrintBill } = v;
   const pendingDiscount = discountPending(draft);
   const printed = order?.status === 'BILL_PRINTED';
@@ -113,11 +89,31 @@ export function CartPanel(v: CartVm) {
             <input id="cartOrderNotes" value={draft.notes} onChange={(e) => v.patch({ notes: e.target.value })} placeholder="Optional" className="input" autoComplete="off" disabled={printed} />
           </div>
         </div>
+        {loyaltyInPlan && (
+          <div>
+            <label htmlFor="cartCustomerPhone" className="label"><i className="fa-solid fa-star text-amber-500 mr-1" />Phone for loyalty points (optional)</label>
+            <input id="cartCustomerPhone" type="tel" inputMode="numeric" autoComplete="off" maxLength={13} value={draft.phone} onChange={(e) => v.patch({ phone: e.target.value.replace(/[^\d+ ]/g, '') })}
+              placeholder="Customer's 10-digit number" className="input font-mono" disabled={printed} />
+            {order?.customerId && order.customerPoints != null && (
+              <p id="cartMemberChip" className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                <span className="font-semibold text-fg">{order.customerName || 'Member'}</span>
+                <Badge tone="ok">{order.customerPoints} pts</Badge>
+                {order.customerPoints > 0 && order.customerPointsExpireAt && <span>valid till {order.customerPointsExpireAt}</span>}
+              </p>
+            )}
+          </div>
+        )}
         {order?.createdByName && <p id="orderStaffContainer" className="text-xs text-muted"><i className="fa-solid fa-user-tag mr-1.5" />Staff: <strong id="orderStaffName" className="text-fg">{order.createdByName}</strong></p>}
 
         <div id="cartItemsList" className="space-y-2">
           {printed ? (
-            <div className="flex items-center justify-center gap-2 py-3 rounded-lg bg-warn/10 text-warn text-sm font-medium"><i className="fa-solid fa-receipt" />Bill #{order?.billNumber} printed • awaiting payment</div>
+            <>
+              <div className="flex items-center justify-center gap-2 py-3 rounded-lg bg-warn/10 text-warn text-sm font-medium"><i className="fa-solid fa-receipt" />Bill #{order?.billNumber} printed • awaiting payment</div>
+              <section id="cartPrintedItems" aria-label="What was ordered" className="rounded-lg border border-line">
+                <h3 className="flex items-center justify-between px-3 pt-2.5 text-xs font-semibold uppercase tracking-wide text-muted"><span>What was ordered</span><span id="cartPrintedItemCount">{dishCount(order?.items)} item{dishCount(order?.items) === 1 ? '' : 's'}</span></h3>
+                <BillLines items={order?.items} id="cartPrintedItemsList" className="px-3 pb-1" />
+              </section>
+            </>
           ) : draft.cart.length === 0 ? (
             <p className="text-center py-4 text-sm text-muted"><i className="fa-solid fa-basket-shopping mr-2 text-faint" />No items added to order</p>
           ) : draft.cart.map((c, i) => {
@@ -159,6 +155,8 @@ export function CartPanel(v: CartVm) {
       <div className="px-4 pt-2 pb-4 shrink-0 border-t border-line safe-bottom">
         <div className="space-y-1.5 text-sm pb-3">
           <Line label="Subtotal"><span id="cartSubtotal">{inr(printed ? order?.subtotal ?? 0 : totals.subtotal)}</span></Line>
+          {printed && Number(order?.discountAmount) > 0 && <Line label={`Discount${order?.discountPercent ? ` (${order.discountPercent}%)` : ''}`}><span id="cartPrintedDiscount">-{inr(Number(order?.discountAmount))}</span></Line>}
+          {printed && Number(order?.promotionDiscountAmount) > 0 && <Line label={`Promotion${order?.promotionName ? `: ${order.promotionName}` : ''}`}><span id="cartPrintedPromotion">-{inr(Number(order?.promotionDiscountAmount))}</span></Line>}
           {!printed && (isManager || canPrintBill) && (
             <>
               <Line label="Discount">
@@ -191,6 +189,7 @@ export function CartPanel(v: CartVm) {
               )}
             </Line>
           )}
+          {printed && Math.abs(Number(order?.roundOff)) > 0.001 && <Line label="Round off"><span id="cartPrintedRoundOff">{Number(order?.roundOff) > 0 ? '+' : ''}{Number(order?.roundOff).toFixed(2)}</span></Line>}
           <div className="flex items-center justify-between border-t border-line pt-2 text-base font-semibold text-fg">
             <span>Total payable</span><span id="cartTotal" ref={totalRef} className="text-brand-text text-lg inline-block origin-right">{inr(printed ? order?.netAmount ?? 0 : totals.net)}</span>
           </div>

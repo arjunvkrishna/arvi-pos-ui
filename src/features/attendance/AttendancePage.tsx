@@ -100,7 +100,7 @@ export function AttendancePage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div><h2 className="font-medium text-fg">Monthly attendance & working days</h2><p className="text-sm text-muted">{isStaff ? 'Your days this month and your absences and leave.' : 'Eligible days run from the join date to month end.'}</p></div>
           <div className="flex flex-wrap items-end gap-2">
-            <select id="attendanceSummaryYear" value={year} onChange={(e) => setYear(parseInt(e.target.value, 10))} className="input w-24" aria-label="Year">{summaryYears().map((y) => <option key={y}>{y}</option>)}</select>
+            <select id="attendanceSummaryYear" value={year} onChange={(e) => setYear(parseInt(e.target.value, 10))} className="input w-28" aria-label="Year">{summaryYears().map((y) => <option key={y}>{y}</option>)}</select>
             <select id="attendanceSummaryMonth" value={month} onChange={(e) => setMonth(parseInt(e.target.value, 10))} className="input w-36" aria-label="Month">{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>
             {!isStaff && (
               <div id="summaryEmployeeSelectorContainer"><select id="attendanceSummaryEmployee" value={who} onChange={(e) => setWho(e.target.value)} className="input w-48" aria-label="User">

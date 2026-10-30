@@ -44,7 +44,7 @@ export function DishGrid({ items, categories, loading, category, onCategory, que
         <button type="button" className={pill(category === null)} onClick={() => onCategory(null)}>All items</button>
         {categories.map((c) => <button type="button" key={c.id} className={pill(category === c.id)} onClick={() => onCategory(c.id)}><i className={`fa-solid ${c.icon || 'fa-utensils'} mr-1.5 text-xs`} />{c.name}</button>)}
       </div>
-      <div id="posDishesGrid" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 pb-40 lg:pb-0">
+      <div id="posDishesGrid" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1900px]:grid-cols-6 gap-2 pb-40 lg:pb-0">
         {loading && Array.from({ length: 8 }, (_, i) => <div key={i} className="h-24 rounded-xl shimmer" />)}
         {!loading && shown.length === 0 && <p className="col-span-full text-center py-10 text-sm text-muted">No dishes found</p>}
         {!loading && shown.map((m) => {

@@ -46,6 +46,9 @@ export interface Insights {
   byOrderType: Slice[]; byPaymentMode: Slice[]; byCategory: Slice[];
   byStaff: { staff: string; orders: number; sales: number; avgOrder: number; share: number }[];
   byTable: { table: string; orders: number; sales: number }[];
+  /** how long guests stayed (kitchen ticket printed to payment confirmed), in minutes: the cafe and each table */
+  dineIn: { visits: number; avgMinutes: number; medianMinutes: number; shortestMinutes: number; longestMinutes: number; unmeasured: number; tooLong: number; maxVisitMinutes: number;
+    byTable: { table: string; visits: number; avgMinutes: number; longestMinutes: number }[] };
   discounts: { discountAmount: number; promotionAmount: number; total: number; billsWithDiscount: number; percentOfGross: number };
   losses: { refundAmount: number; refundCount: number; voidedCount: number; voidedValue: number; cancelledCount: number; wasteCost: number };
   tax: { taxableSales: number; cgst: number; sgst: number; totalTax: number; roundOff: number };
@@ -103,7 +106,7 @@ export interface ProfitAndLossReport {
 export interface BalanceSheetReport {
   asOfDate: string;
   assets: { cashInDrawerAndBank: number; inventoryValuationAtCost: number; totalAssets: number };
-  liabilities: { unpaidSupplierInvoices: number; giftCardLiability: number; unpaidTips: number; totalLiabilities: number };
+  liabilities: { unpaidSupplierInvoices: number; unpaidTips: number; totalLiabilities: number };
   netWorthOrEquity: number;
 }
 

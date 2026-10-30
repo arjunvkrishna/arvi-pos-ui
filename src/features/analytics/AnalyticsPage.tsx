@@ -65,8 +65,9 @@ export function AnalyticsPage() {
           {has('EXPORTS') && <button type="button" id="btnExportAnalyticsExcel" disabled={exp.isPending} onClick={() => onExport('excel')} title="Export selected analytics to an Excel (.xlsx) spreadsheet" className="btn btn-secondary"><i className="fa-solid fa-file-excel text-ok" />Export Excel</button>}
         </span>} />
 
-      <div className="max-w-full overflow-x-auto no-scrollbar">
+      <div className="max-w-full">
         <SegmentedTabs
+          wrap
           label="Analytics sections"
           value={shown}
           onChange={setSub}
@@ -76,7 +77,7 @@ export function AnalyticsPage() {
 
       {shown === 'overview' && (<>
         <div className="card p-3 flex flex-wrap items-end gap-2">
-          <div id="analyticsPeriodPills" className="max-w-full overflow-x-auto no-scrollbar"><SegmentedTabs label="Period" value={period} onChange={setPeriod} options={PERIODS.map(([v, l]) => ({ value: v, label: l, id: `pill-${v}` }))} /></div>
+          <div id="analyticsPeriodPills" className="max-w-full"><SegmentedTabs wrap label="Period" value={period} onChange={setPeriod} options={PERIODS.map(([v, l]) => ({ value: v, label: l, id: `pill-${v}` }))} /></div>
           {period === 'CUSTOM' && <div id="analyticsCustomDateBox" className="flex items-end gap-2 flex-wrap"><Field id="analyticsStartDate" label="From"><input id="analyticsStartDate" type="date" value={range.start} onChange={(e) => setRange({ ...range, start: e.target.value })} className="input" /></Field><Field id="analyticsEndDate" label="To"><input id="analyticsEndDate" type="date" value={range.end} onChange={(e) => setRange({ ...range, end: e.target.value })} className="input" /></Field><button type="button" onClick={apply} className="btn btn-primary h-10">Apply</button></div>}
         </div>
         <OverviewTab q={q} layout={layout} />

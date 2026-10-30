@@ -173,10 +173,6 @@ export function AccountingTab() {
                   <span className="font-medium">{inr(bs.liabilities.unpaidSupplierInvoices)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Active Gift Card Liability</span>
-                  <span className="font-medium">{inr(bs.liabilities.giftCardLiability)}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-muted">Unpaid Staff Tips</span>
                   <span className="font-medium">{inr(bs.liabilities.unpaidTips)}</span>
                 </div>

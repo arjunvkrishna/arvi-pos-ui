@@ -12,6 +12,7 @@ import { trackPrintJob, warnIfPrinterOffline } from './jobs';
 import { PaymentQr } from './PaymentQr';
 import { usePaymentQr } from './usePaymentQr';
 import { billTax, brandName, cafeLogo, isUpdatedKot, kotTicketTime, kotTotals, orderKind, totalQty } from './rules';
+import { DEFAULT_MIN_REDEEM, pointsEarnedFor } from '../customers/loyalty';
 import { usePrintUi } from './store';
 
 // Receipts use inline styles only: the same markup is shown on screen and copied into the print iframe, which has no site CSS.
@@ -21,20 +22,36 @@ const rule: React.CSSProperties = { borderTop: '1.5px dashed #000', margin: '5px
 const row: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 8 };
 const inr = (n?: number | null) => `₹${Number(n || 0).toFixed(2)}`;
 
-export function BillReceipt({ bill, cfg }: { bill: Bill; cfg: PrinterConfig | null }) {
+/** The loyalty member on a bill: what they hold now and until when. */
+export interface ReceiptMember { name: string; points: number; expireAt?: string | null }
+
+const niceDay = (ymd: string) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); };
+
+/**
+ * The customer bill. A member's points are printed on it so they can ask for them to be used; with `redeemPoints` it is the bill
+ * as it will be once those points are used (total, points used, balance to pay, points the rest earns). `splitMarker` and
+ * `paymentText` are for one of several bills made from a bill by items.
+ */
+export function BillReceipt({ bill, cfg, redeemPoints = 0, member, id = 'thermalReceiptContent', splitMarker, paymentText }: {
+  bill: Bill; cfg: PrinterConfig | null; redeemPoints?: number; member?: ReceiptMember | null; id?: string; splitMarker?: string; paymentText?: string;
+}) {
   const kind = orderKind(bill);
   const tax = billTax(bill);
+  const m: ReceiptMember | null = member !== undefined ? member
+    : bill.customerPoints != null ? { name: bill.customerName || 'Member', points: bill.customerPoints, expireAt: bill.customerPointsExpireAt } : null;
+  const toPay = Math.max(0, Number(bill.netAmount || 0) - redeemPoints);
   const sub1 = cfg?.subheader?.trim();
   const sub2 = cfg?.subheader2?.trim();
   const user = useSession((s) => s.user);
   return (
-    <div id="thermalReceiptContent" style={paper}>
+    <div id={id} style={paper}>
       <div style={center}>
         {cfg?.logoEnabled !== false && <img id="rcptLogoImg" className="receipt-logo" src={cafeLogo()} alt="" style={{ maxHeight: cfg?.logoSize || 48, marginBottom: cfg?.logoGap ?? 0, display: 'block', margin: '0 auto' }} />}
         <div id="rcptStoreName" style={{ fontWeight: 900, fontSize: cfg?.fontSize === 'DOUBLE_W_H' ? 18 : 16, textTransform: 'uppercase' }}>{cfg?.headerTitle || brandName()}</div>
         {sub1 && <div id="rcptSubHeader" style={{ fontSize: 10 }}>{sub1}</div>}
         {sub2 && <div id="rcptSubHeader2" style={{ fontSize: 9.5 }}>{sub2}</div>}
         <div id="rcptDocTitle" style={{ fontWeight: 800, marginTop: 3 }}>{tax.title}</div>
+        {splitMarker && <div id="rcptSplitMarker" style={{ fontWeight: 900 }}>{splitMarker}</div>}
         {tax.active && <div id="rcptGstinRow" style={{ fontSize: 10 }}>GSTIN: <span id="rcptGstin">{tax.gstin}</span></div>}
       </div>
       <div style={rule} />
@@ -70,9 +87,25 @@ export function BillReceipt({ bill, cfg }: { bill: Bill; cfg: PrinterConfig | nu
       </>}
       <div style={{ ...rule, borderTopStyle: 'solid' }} />
       <div style={{ ...row, fontWeight: 900, fontSize: 14 }}><span>GRAND TOTAL</span><span id="rcptGrandTotal">{inr(bill.netAmount)}</span></div>
-      <div style={row}><span>Payment</span><span id="rcptPayMode">{bill.payments && bill.payments.length > 1 ? 'SPLIT' : bill.paymentMode || 'CASH'}</span></div>
-      {bill.payments && bill.payments.length > 1 && bill.payments.map((p, i) => <div key={i} style={row}><span>&nbsp;&nbsp;{p.mode}</span><span>Rs. {Number(p.amount).toFixed(2)}</span></div>)}
+      {redeemPoints > 0 && <>
+        <div style={row}><span>Loyalty points used ({redeemPoints} pts)</span><span id="rcptPointsUsed">-{inr(redeemPoints)}</span></div>
+        <div style={{ ...row, fontWeight: 900, fontSize: 14 }}><span>BALANCE TO PAY</span><span id="rcptBalanceToPay">{inr(toPay)}</span></div>
+      </>}
+      {paymentText ? <div style={row}><span>Payment</span><span id="rcptPayMode">{paymentText}</span></div> : <>
+        <div style={row}><span>Payment</span><span id="rcptPayMode">{bill.status === 'BILL_PRINTED' ? 'PENDING' : bill.payments && bill.payments.length > 1 ? 'SPLIT' : bill.paymentMode || 'CASH'}</span></div>
+        {bill.status !== 'BILL_PRINTED' && bill.payments && bill.payments.length > 1 && bill.payments.map((p, i) => <div key={i} style={row}><span>&nbsp;&nbsp;{p.mode}</span><span>Rs. {Number(p.amount).toFixed(2)}</span></div>)}
+      </>}
       <div style={rule} />
+      {m && <div id="rcptLoyalty">
+        <div style={{ fontWeight: 900 }}>LOYALTY: {m.name}</div>
+        <div style={row}><span>Points balance</span><span id="rcptPointsBalance">{m.points} pts ({inr(m.points)})</span></div>
+        {m.points > 0 && m.expireAt && <div style={row}><span>Valid till</span><span id="rcptPointsValid">{niceDay(m.expireAt)}</span></div>}
+        {redeemPoints > 0 ? <>
+          <div style={row}><span>Points after this bill</span><span id="rcptPointsAfter">{m.points - redeemPoints + pointsEarnedFor(toPay)} pts</span></div>
+          <div style={row}><span>Earned on {inr(toPay)}</span><span id="rcptPointsEarned">+{pointsEarnedFor(toPay)} pts</span></div>
+        </> : bill.status === 'BILL_PRINTED' && m.points >= DEFAULT_MIN_REDEEM && <div id="rcptPointsHint" style={{ ...center, fontSize: 10 }}>Ask the cashier to use your points on this bill (1 point = ₹1).</div>}
+        <div style={rule} />
+      </div>}
       {cfg?.paymentQrEnabled !== false && <PaymentQr />}
       <div id="rcptFooterMsg" style={{ ...center, fontWeight: 800, paddingBottom: (cfg?.footerSpacing ?? 1) * 4 }}>{cfg?.footerMessage || 'THANK YOU! VISIT AGAIN'}</div>
     </div>

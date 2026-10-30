@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Bill } from '../bills/types';
-import { addLine, discountPending, discountProblem, gstSplit, cartTotals, hasOrderChanges, matchesFilter, noteWithPrefix, orderGates, orderMode, statusLabel, stripNotePrefix, upsertOrder, type CartLine } from './rules';
+import { addLine, balanceTwo, discountPending, discountProblem, gstSplit, cartTotals, hasOrderChanges, matchesFilter, noteWithPrefix, orderGates, orderMode, partsText, phoneDigits, statusLabel, stripNotePrefix, upsertOrder, type CartLine } from './rules';
 
 const dish = (id: number, price = 100) => ({ id, name: `D${id}`, price });
 const line = (id: number, quantity = 1, extra: Partial<CartLine> = {}): CartLine => ({ item: dish(id), quantity, customization: '', isTakeaway: false, ...extra });
@@ -39,6 +39,13 @@ describe('hasOrderChanges', () => {
     expect(hasOrderChanges({ ...a, cart: [line(1, 1, { customization: 'less sugar' })], order: order() })).toBe(true);
     expect(hasOrderChanges({ ...a, customer: 'Asha', cart: [line(1)], order: order() })).toBe(true);
     expect(hasOrderChanges({ ...a, mode: 'TAKEAWAY', parcelVisible: true, parcel: '20', cart: [line(1)], order: order({ orderType: 'TAKEAWAY', parcelCharge: 10, customerName: 'Guest' }) })).toBe(true);
+  });
+  it('sees the loyalty phone number being added, changed or removed, and ignores how it is written', () => {
+    expect(hasOrderChanges({ ...a, phone: '9876543210', cart: [line(1)], order: order() })).toBe(true);
+    expect(hasOrderChanges({ ...a, phone: '9876543210', cart: [line(1)], order: order({ customerPhone: '+919876543210' }) })).toBe(false);
+    expect(hasOrderChanges({ ...a, phone: '98765 43211', cart: [line(1)], order: order({ customerPhone: '+919876543210' }) })).toBe(true);
+    expect(hasOrderChanges({ ...a, phone: '', cart: [line(1)], order: order({ customerPhone: '+919876543210' }) })).toBe(true);
+    expect(hasOrderChanges({ ...a, cart: [line(1)], order: order({ customerPhone: '+919876543210' }) })).toBe(false);
   });
   it('treats "Guest" and empty as the same takeaway customer', () => {
     expect(hasOrderChanges({ ...a, mode: 'TAKEAWAY', cart: [line(1)], order: order({ orderType: 'TAKEAWAY', customerName: 'Guest', items: [{ menuItemId: 1, itemName: 'D1', quantity: 1, price: 100, subtotal: 100, isTakeaway: true }] }) })).toBe(false);
@@ -100,6 +107,15 @@ describe('labels and helpers', () => {
   });
 });
 
+describe('phoneDigits', () => {
+  it('keeps the last 10 digits of a number typed by hand or stored with +91', () => {
+    expect(phoneDigits('+91 98765-43210')).toBe('9876543210');
+    expect(phoneDigits('09876543210')).toBe('9876543210');
+    expect(phoneDigits('98765')).toBe('98765');
+    expect(phoneDigits(null)).toBe('');
+  });
+});
+
 describe('addLine', () => {
   it('raises the quantity of the same kind and keeps dine-in and parcel apart', () => {
     const once = addLine([], dish(1), false);
@@ -129,5 +145,28 @@ describe('discount save', () => {
     expect(discountProblem('')).toBeNull();
     expect(discountProblem('101')).not.toBeNull();
     expect(discountProblem('-5')).not.toBeNull();
+  });
+});
+
+describe('cash plus UPI', () => {
+  const two = () => [{ mode: 'CASH' as const, amount: '' }, { mode: 'UPI' as const, amount: '' }];
+  it('typing the cash makes the UPI what is left of the bill', () => {
+    const p = balanceTwo(300, two(), 0, '100');
+    expect(p.map((x) => x.amount)).toEqual(['100', '200.00']);
+    expect(partsText(p)).toBe('Cash ₹100.00 + UPI ₹200.00');
+  });
+  it('typing the UPI first works the same way', () => {
+    expect(balanceTwo(300, two(), 1, '250.50').map((x) => x.amount)).toEqual(['49.50', '250.50']);
+  });
+  it('paise stay exact and a clear box clears the other one', () => {
+    expect(balanceTwo(480.1, two(), 0, '0.1').map((x) => x.amount)).toEqual(['0.1', '480.00']);
+    expect(balanceTwo(300, [{ mode: 'CASH', amount: '100' }, { mode: 'UPI', amount: '200.00' }], 0, '').map((x) => x.amount)).toEqual(['', '']);
+  });
+  it('more than the bill leaves nothing for the other way (the screen then says it is too much)', () => {
+    expect(balanceTwo(300, two(), 0, '350').map((x) => x.amount)).toEqual(['350', '']);
+  });
+  it('with three or more payments only the typed one changes', () => {
+    const three = [{ mode: 'CASH' as const, amount: '' }, { mode: 'UPI' as const, amount: '50' }, { mode: 'CARD' as const, amount: '' }];
+    expect(balanceTwo(300, three, 0, '100').map((x) => x.amount)).toEqual(['100', '50', '']);
   });
 });

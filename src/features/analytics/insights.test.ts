@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Insights, Metric } from './api';
-import { deltaView, heatLevel, highlights, hourLabel, hourRange, peakHours } from './insights';
+import { deltaView, heatLevel, highlights, hourLabel, hourRange, minutesText, peakHours } from './insights';
 import { DEFAULT_LAYOUT, PRESETS, WIDGET_IDS, isShown, layoutKey, loadLayout, moveWidget, normalizeLayout, saveLayout, shownOrder, toggleWidget } from './layout';
 
 const m = (current: number, previous: number, changePercent: number | null): Metric => ({ current, previous, changePercent });
@@ -11,6 +11,7 @@ const base = (): Insights => ({
   byWeekday: [1, 2, 3, 4, 5, 6, 7].map((d) => ({ day: d, label: 'x', sales: d * 100, orders: d, avgOrder: 100, days: 3, salesPerDay: d * 33 })),
   heatmap: [], byOrderType: [{ label: 'Dine-in', orders: 20, amount: 900, quantity: 0, share: 75 }, { label: 'Takeaway', orders: 10, amount: 300, quantity: 0, share: 25 }],
   byPaymentMode: [], byCategory: [{ label: 'Burgers', orders: 10, amount: 600, quantity: 20, share: 50 }], byStaff: [], byTable: [],
+  dineIn: { visits: 0, avgMinutes: 0, medianMinutes: 0, shortestMinutes: 0, longestMinutes: 0, unmeasured: 0, tooLong: 0, maxVisitMinutes: 360, byTable: [] },
   discounts: { discountAmount: 0, promotionAmount: 0, total: 0, billsWithDiscount: 0, percentOfGross: 0 }, losses: { refundAmount: 0, refundCount: 0, voidedCount: 0, voidedValue: 0, cancelledCount: 0, wasteCost: 0 },
   tax: { taxableSales: 0, cgst: 0, sgst: 0, totalTax: 0, roundOff: 0 }, dishes: [], neverSold: [], neverSoldCount: 0,
   stock: { valueByCategory: [], totalValue: 0, negativeCount: 0, lowCount: 0, expiringCount: 0, expiredCount: 0, wasteByReason: [], wasteCost: 0 },
@@ -118,5 +119,20 @@ describe('the customisable layout', () => {
     expect(loadLayout('x', { getItem: () => { throw new Error('blocked'); } })).toEqual(DEFAULT_LAYOUT);
     expect(() => saveLayout('x', toggleWidget(DEFAULT_LAYOUT, 'tax'), { setItem: () => { throw new Error('full'); }, removeItem: () => undefined })).not.toThrow();
     expect(loadLayout('asha', { getItem: () => '{bad json' })).toEqual(DEFAULT_LAYOUT);
+  });
+});
+
+describe('dine-in time', () => {
+  it('says a stay in minutes the way a person would', () => {
+    expect(minutesText(0.4)).toBe('under 1 min');
+    expect(minutesText(1)).toBe('1 min');
+    expect(minutesText(44.6)).toBe('45 min');
+    expect(minutesText(60)).toBe('1 h');
+    expect(minutesText(72)).toBe('1 h 12 min');
+    expect(minutesText(119.6)).toBe('2 h');
+  });
+  it('is a section of the analytics screen, in the floor preset', () => {
+    expect(WIDGET_IDS).toContain('dineIn');
+    expect(PRESETS.find((p) => p.id === 'floor')!.layout.hidden).not.toContain('dineIn');
   });
 });

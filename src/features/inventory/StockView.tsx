@@ -105,14 +105,14 @@ export function StockView({ items, loading, canManage, category, onCategory, que
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="max-w-full overflow-x-auto no-scrollbar">
-          <SegmentedTabs label="Item category" value={category} onChange={onCategory} options={(['Stock', 'Consumable', 'Small equipment', 'Fixed asset', 'ALL'] as CategoryFilter[]).map((c) => ({
+        <div className="max-w-full">
+          <SegmentedTabs wrap label="Item category" value={category} onChange={onCategory} options={(['Stock', 'Consumable', 'Small equipment', 'Fixed asset', 'ALL'] as CategoryFilter[]).map((c) => ({
             value: c, label: CATEGORY_LABEL[c], count: counts[c], id: `inv-cat-tab-${c.replace(/ /g, '')}`,
           }))} />
         </div>
         <SearchInput id="inventorySearchInput" value={query} onChange={onQuery} placeholder="Search items, category, supplier or unit" />
       </div>
-      <p id="inventoryResultCount" className="text-xs text-muted min-h-4">
+      <p id="inventoryResultCount" className="text-xs text-muted empty:hidden">
         {filtered ? `Showing ${rows.length} of ${inCategory.length} item${inCategory.length === 1 ? '' : 's'}${category === 'ALL' ? '' : ` in ${category}`}` : ''}
       </p>
 
@@ -166,7 +166,7 @@ export function StockView({ items, loading, canManage, category, onCategory, que
                             <button type="button" onClick={() => onEdit(i)} title="Edit item details" aria-label={`Edit ${i.name}`} className="btn btn-ghost btn-icon btn-sm"><i className="fa-regular fa-pen-to-square" /></button>
                             <button type="button" onClick={() => onDelete(i)} title="Delete" aria-label={`Delete ${i.name}`} className="btn btn-ghost btn-icon btn-sm hover:!text-danger"><i className="fa-regular fa-trash-can" /></button>
                           </>
-                        ) : <span className="text-faint text-sm">-</span>}
+                        ) : <span className="text-faint text-sm hidden md:inline">-</span>}
                       </div>
                     </td>
                   </tr>

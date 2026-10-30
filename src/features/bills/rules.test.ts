@@ -6,9 +6,10 @@ const bill = (o: Partial<Bill>): Bill => ({ id: 1, billNumber: 'NRM-1', status: 
 
 describe('bill log', () => {
   it('actions follow status', () => {
-    expect(billActions(bill({ status: 'PAID' }))).toEqual({ edit: true, refund: true, void: false });
-    expect(billActions(bill({ status: 'ACTIVE' }))).toEqual({ edit: true, refund: false, void: true });
-    expect(billActions(bill({ status: 'REFUNDED' }))).toEqual({ edit: false, refund: false, void: false });
+    expect(billActions(bill({ status: 'PAID' }))).toEqual({ edit: true, refund: true, void: false, split: true });
+    expect(billActions(bill({ status: 'BILL_PRINTED' }))).toEqual({ edit: true, refund: false, void: false, split: true });
+    expect(billActions(bill({ status: 'ACTIVE' }))).toEqual({ edit: true, refund: false, void: true, split: false });
+    expect(billActions(bill({ status: 'REFUNDED' }))).toEqual({ edit: false, refund: false, void: false, split: false });
   });
 });
 

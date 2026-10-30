@@ -1,4 +1,3 @@
-import { getSession } from '../../api/session';
 import { api, ApiError } from '../../api/client';
 
 export interface Customer {
@@ -31,19 +30,6 @@ export interface LoyaltyLedger {
   createdAt: string;
 }
 
-export interface GiftCard {
-  id: number;
-  code: string;
-  initialBalance: number;
-  currentBalance: number;
-  status: 'ACTIVE' | 'EXHAUSTED' | 'EXPIRED' | 'CANCELLED';
-  paymentMode: string;
-  issuedToCustomerId?: number | null;
-  issuedToCustomerName?: string | null;
-  expiresAt?: string | null;
-  createdAt: string;
-}
-
 export interface CustomerInput {
   name: string;
   phone: string;
@@ -59,7 +45,6 @@ export interface CustomerInput {
 export const customersKey = ['customers'] as const;
 export const customerKey = (id: number) => ['customers', id] as const;
 export const loyaltyKey = (id: number) => ['customers', id, 'loyalty'] as const;
-export const giftCardsKey = ['gift-cards'] as const;
 
 export const fetchCustomers = (q?: string) => {
   if (q && q.trim()) {
@@ -103,39 +88,6 @@ export const updateCustomer = (id: number, c: CustomerInput) => api<Customer>(`/
 
 export const fetchLoyaltyLedger = (customerId: number) => api<LoyaltyLedger[]>(`/customers/${customerId}/loyalty`);
 
-export const fetchGiftCards = () =>
-  api<{ content: GiftCard[] } | GiftCard[]>('/gift-cards?size=100').then((res) => {
-    return Array.isArray(res) ? res : res.content || [];
-  });
-
-export const issueGiftCard = (data: {
-  initialBalance: number;
-  paymentMode: string;
-  customerId?: number | null;
-  expiresAt?: string | null;
-}) => api<GiftCard>('/gift-cards', { method: 'POST', body: data });
-
-/** The cafe is part of the address (each cafe has its own database), so the same card code in two cafes never mixes. */
-export const giftCardBalancePath = (cafe: string, code: string) => `/public/${encodeURIComponent(cafe)}/gift-cards/${encodeURIComponent(code)}/balance`;
-export const fetchGiftCardBalance = (code: string) =>
-  api<{ code: string; currentBalance: number; status: string }>(giftCardBalancePath(getSession()?.tenantCode ?? '', code));
-
-export interface Coupon {
-  id: number;
-  code: string;
-  description?: string;
-  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
-  discountValue: number;
-  minOrderValue?: number;
-  maxDiscountAmount?: number;
-  usageLimit?: number;
-  usageLimitPerCustomer?: number;
-  usedCount: number;
-  validFrom: string;
-  validUntil?: string | null;
-  isActive: boolean;
-}
-
 export interface Campaign {
   id: number;
   name: string;
@@ -148,16 +100,6 @@ export interface Campaign {
   sentAt?: string | null;
   createdAt: string;
 }
-
-export const fetchCoupons = () => api<Coupon[]>('/coupons');
-export const createCoupon = (data: Partial<Coupon>) => api<Coupon>('/coupons', { method: 'POST', body: data });
-export const updateCoupon = (id: number, data: Partial<Coupon>) => api<Coupon>(`/coupons/${id}`, { method: 'PUT', body: data });
-export const deleteCoupon = (id: number) => api<void>(`/coupons/${id}`, { method: 'DELETE' });
-export const validateCoupon = (code: string, customerId?: number | null, orderAmount?: number) =>
-  api<{ valid: boolean; calculatedDiscount?: number; discountAmount?: number; message?: string }>('/coupons/validate', {
-    method: 'POST',
-    body: { code, customerId, orderAmount },
-  });
 
 export const fetchCampaigns = () => api<Campaign[]>('/campaigns');
 export const createCampaign = (data: Partial<Campaign>) => api<Campaign>('/campaigns', { method: 'POST', body: data });

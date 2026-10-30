@@ -44,7 +44,7 @@ export function ActiveOrdersDialog({ orders, isManager, onClose, onOpen, onPay, 
           <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-text/70 pointer-events-none" aria-hidden="true" />
           <input id="activeOrdersSearchInput" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search customer, token, bill no, table..." className="input pl-10 h-11 rounded-xl" aria-label="Search active orders" />
         </div>
-        <div role="group" aria-label="Filter orders" className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 pb-0.5">
+        <div role="group" aria-label="Filter orders" className="flex flex-wrap gap-2 pb-0.5">
           {FILTERS.map((f) => (
             <button key={f.v} type="button" aria-pressed={filter === f.v} onClick={() => setFilter(f.v)}
               className={`shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full border text-sm font-medium transition active:scale-95 ${filter === f.v ? 'bg-brand text-gray-950 border-brand shadow-card' : 'bg-surface text-fg border-line-strong hover:border-brand'}`}>

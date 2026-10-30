@@ -38,7 +38,7 @@ export function AppShell() {
       <MobileDrawer />
       <Header />
       <OfflineBanner />
-      <main className="max-w-[110rem] mx-auto w-full px-3 sm:px-6 py-5 sm:py-7 pb-24 lg:pb-8">   {/* fills the space beside the sidebar; only a very large monitor is capped (1760 px) and centred */}
+      <main className="w-full px-3 sm:px-6 py-5 sm:py-7 pb-24 lg:pb-8">   {/* fills all the space beside the sidebar, whatever the screen size or browser zoom: no gap and no cap */}
         <div key={pathname} className="anim-rise-in"><Outlet /></div>   {/* each screen eases in when you switch to it */}
       </main>
       <BottomNav />

@@ -43,7 +43,7 @@ export const orderKey = (o: Bill | null | undefined) =>
   o ? `${o.id}|${o.status}|${o.discountPercent ?? ''}|${(o.items || []).map((i) => `${i.menuItemId}:${i.quantity}:${i.price}:${i.printedQuantity ?? ''}:${i.isTakeaway ? 1 : 0}:${i.customization ?? ''}:${i.modifiersSnapshot ?? ''}:${i.comboSnapshot ?? ''}`).join(',')}|${o.kotLastChanges ?? ''}` : 'none';
 
 export interface Draft {
-  cart: CartLine[]; customer: string; notes: string; parcel: string; discount: string; /** What was typed in the discount box; it becomes `discount` (the applied one) only when Save is pressed. */ discountInput: string; gstSel: string; gstCustom: string;
+  cart: CartLine[]; customer: string; /** The loyalty phone number the customer gave when ordering (digits only). */ phone: string; notes: string; parcel: string; discount: string; /** What was typed in the discount box; it becomes `discount` (the applied one) only when Save is pressed. */ discountInput: string; gstSel: string; gstCustom: string;
   /** The staff changed something not yet saved: server refreshes must not replace it. */
   touched: boolean;
   /** Which server order (and state of it) this draft was built from. */
@@ -55,14 +55,17 @@ export const configuredGst = (cfg?: GstLite | null) => (cfg?.enabled && (cfg.tot
 
 export function draftFromOrder(order: Bill | null, menu: DishRef[], ctx: { defaultParcel: number; cfg?: GstLite | null; key: string }): Draft {
   const parcelDefault = (ctx.defaultParcel || 10).toFixed(2);
-  if (!order) return { cart: [], customer: '', notes: '', parcel: parcelDefault, discount: '0', discountInput: '0', gstSel: configuredGst(ctx.cfg), gstCustom: '0', touched: false, key: ctx.key, orderId: null, status: '' };
+  if (!order) return { cart: [], customer: '', phone: '', notes: '', parcel: parcelDefault, discount: '0', discountInput: '0', gstSel: configuredGst(ctx.cfg), gstCustom: '0', touched: false, key: ctx.key, orderId: null, status: '' };
   const printed = order.status === 'BILL_PRINTED';
   return {
-    cart: printed ? [] : cartFromOrder(order, menu), customer: order.customerName || '', notes: stripNotePrefix(order.notes),
+    cart: printed ? [] : cartFromOrder(order, menu), customer: order.customerName || '', phone: phoneDigits(order.customerPhone), notes: stripNotePrefix(order.notes),
     parcel: order.parcelCharge != null && !Number.isNaN(Number(order.parcelCharge)) ? Number(order.parcelCharge).toFixed(2) : parcelDefault,
     discount: String(order.discountPercent ?? 0), discountInput: String(order.discountPercent ?? 0), gstSel: configuredGst(ctx.cfg), gstCustom: '0', touched: false, key: ctx.key, orderId: order.id, status: order.status,
   };
 }
+
+/** The 10 digits of a phone number typed by hand or stored with +91. */
+export const phoneDigits = (v?: string | null) => { const d = (v || '').replace(/\D/g, ''); return d.length > 10 ? d.slice(-10) : d; };
 
 export const num = (v: string, fallback = 0) => { const n = parseFloat(v); return Number.isNaN(n) ? fallback : n; };
 
@@ -88,7 +91,7 @@ export function cartTotals(a: { cart: CartLine[]; mode: Mode; isManager: boolean
 
 export const locationReady = (mode: Mode, table: string, customer: string) => mode === 'OUTDOOR' ? customer.trim().length > 0 : mode === 'TAKEAWAY' ? true : table.trim().length > 0;
 
-export function hasOrderChanges(a: { ready: boolean; cart: CartLine[]; order: Bill | null; mode: Mode; customer: string; notes: string; parcelVisible: boolean; parcel: string }): boolean {
+export function hasOrderChanges(a: { ready: boolean; cart: CartLine[]; order: Bill | null; mode: Mode; customer: string; phone?: string; notes: string; parcelVisible: boolean; parcel: string }): boolean {
   if (!a.ready || a.cart.length === 0) return false;
   const o = a.order;
   if (!o || !o.id) return true;
@@ -113,6 +116,7 @@ export function hasOrderChanges(a: { ready: boolean; cart: CartLine[]; order: Bi
   const guest = (v: string) => !v || v.toLowerCase() === 'guest' || v.toLowerCase() === 'takeaway guest';
   if (!(takeawayOrder && guest(cur) && guest(was)) && cur !== was) return true;
   if (a.notes.trim() !== stripNotePrefix(o.notes)) return true;
+  if (a.phone !== undefined && phoneDigits(a.phone) !== phoneDigits(o.customerPhone)) return true;
   if (a.parcelVisible) {
     const input = parseFloat(a.parcel); const savedCharge = Number(o.parcelCharge ?? 0);
     if (!Number.isNaN(input) && Math.abs(input - savedCharge) > 0.001) return true;
@@ -344,6 +348,20 @@ export function fillLast(net: number, parts: PayPart[]): PayPart[] {
   const left = partsRemaining(net, others);
   return [...others, { ...parts[parts.length - 1], amount: left > 0 ? left.toFixed(2) : '' }];
 }
+
+/** With exactly two payments, typing one amount sets the other to what is left of the bill (never below zero): 100 cash on a 300 bill makes the UPI 200. */
+export function balanceTwo(net: number, parts: PayPart[], edited: number, text: string): PayPart[] {
+  const next = parts.map((p, k) => (k === edited ? { ...p, amount: text } : p));
+  if (parts.length !== 2) return next;
+  const other = 1 - edited;
+  const typed = Number(text);
+  if (text.trim() === '' || !Number.isFinite(typed) || typed < 0) return next.map((p, k) => (k === other ? { ...p, amount: '' } : p));
+  const rest = Math.max(0, rupees(paise(net) - paise(typed)));
+  return next.map((p, k) => (k === other ? { ...p, amount: rest > 0 ? rest.toFixed(2) : '' } : p));
+}
+const MODE_WORD: Record<PayPart['mode'], string> = { CASH: 'Cash', UPI: 'UPI', CARD: 'Card', LOYALTY_POINTS: 'Points' };
+/** "Cash ₹100.00 + UPI ₹200.00": what was typed so far, for the line under the payment rows. */
+export const partsText = (parts: PayPart[]) => parts.filter((p) => Number(p.amount) > 0).map((p) => `${MODE_WORD[p.mode]} ₹${Number(p.amount).toFixed(2)}`).join(' + ');
 
 /** The discount box holds a value that was not saved yet (so it is not part of the totals). */
 export const discountPending = (d: Pick<Draft, 'discount' | 'discountInput'>) => num(d.discountInput) !== num(d.discount);

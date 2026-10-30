@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { ChartConfiguration } from 'chart.js';
 import { ChartCanvas } from '../../components/ChartCanvas';
-import { Badge, EmptyState } from '../../components/ui';
+import { Badge, EmptyState, SegmentedTabs } from '../../components/ui';
 import { chartColors } from '../../lib/chartColors';
 import type { DishRow, Insights, Slice } from './api';
-import { QUADRANT, deltaView, heatLevel, highlights, hourLabel, hourRange, peakHours } from './insights';
+import { QUADRANT, deltaView, heatLevel, highlights, hourLabel, hourRange, minutesText, peakHours } from './insights';
 import { inr0, inr2 } from './rules';
 
 const PALETTE = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#f43f5e', '#06b6d4', '#ec4899', '#eab308', '#64748b'];
@@ -151,6 +151,50 @@ export const StaffWidget = ({ i }: { i: Insights }) => <BarList id="analyticsSta
 export function TablesWidget({ i }: { i: Insights }) {
   if (i.byTable.length === 0) return none('No table orders in this period');
   return <ol id="analyticsTablesList" className="space-y-2">{i.byTable.map((t, k) => <li key={t.table} className="flex items-center justify-between gap-3 rounded-lg border border-line p-2.5 text-sm"><span className="flex items-center gap-2.5"><span className="w-6 h-6 rounded-full bg-subtle text-muted text-xs font-bold flex items-center justify-center">{k + 1}</span><b className="text-fg">{t.table}</b></span><span className="text-muted"><b className="text-brand-text">{inr0(t.sales)}</b> · {t.orders} order{t.orders === 1 ? '' : 's'}</span></li>)}</ol>;
+}
+
+/** How long guests stay (kitchen ticket printed to payment confirmed): the café average, or table by table. */
+export function DineInWidget({ i }: { i: Insights }) {
+  const [view, setView] = useState<'cafe' | 'table'>('cafe');
+  const d = i.dineIn;
+  const left = d ? d.unmeasured + d.tooLong : 0;
+  const why = d ? [d.tooLong > 0 && `${d.tooLong} ran over ${d.maxVisitMinutes / 60} hours (a bill left open)`, d.unmeasured > 0 && `${d.unmeasured} had no kitchen ticket or payment time`].filter(Boolean).join(', ') : '';
+  const note = d && (
+    <p id="dineInNote" className="text-xs text-muted mt-3 pt-2 border-t border-line">
+      Timed from the kitchen ticket being printed to the payment being confirmed.
+      {left > 0 && ` ${left} table bill${left === 1 ? '' : 's'} not counted: ${why}.`}
+    </p>
+  );
+  if (!d || d.visits === 0) return <div id="dineInEmpty">{none('No timed dine-in visits in this period')}{note}</div>;
+  const longest = Math.max(...d.byTable.map((t) => t.avgMinutes), 1);
+  return (
+    <div id="analyticsDineIn">
+      <SegmentedTabs label="How long guests stay" value={view} onChange={setView} options={[{ value: 'cafe', label: 'Café average', id: 'dineInViewCafe' }, { value: 'table', label: 'Per table', id: 'dineInViewTable' }]} />
+      {view === 'cafe' ? (
+        <div id="dineInCafe" className="mt-3">
+          <p className="text-xs text-muted">Average stay at the café</p>
+          <p id="dineInAvg" className="text-3xl font-semibold text-brand-text mt-0.5">{minutesText(d.avgMinutes)}</p>
+          <p id="dineInVisits" className="text-xs text-muted mt-0.5">across {d.visits} visit{d.visits === 1 ? '' : 's'} at {d.byTable.length} table{d.byTable.length === 1 ? '' : 's'}</p>
+          <dl className="grid grid-cols-3 gap-2 mt-3 text-sm">
+            {[['Typical (median)', d.medianMinutes, 'dineInMedian'], ['Shortest', d.shortestMinutes, 'dineInShortest'], ['Longest', d.longestMinutes, 'dineInLongest']].map(([label, v, id]) => (
+              <div key={id as string} className="rounded-lg border border-line p-2.5"><dt className="text-xs text-muted">{label as string}</dt><dd id={id as string} className="font-semibold text-fg mt-0.5">{minutesText(v as number)}</dd></div>
+            ))}
+          </dl>
+        </div>
+      ) : (
+        <ol id="dineInTableList" className="mt-3 space-y-2">
+          {d.byTable.map((t) => (
+            <li key={t.table} data-table={t.table} className="rounded-lg border border-line p-2.5 text-sm">
+              <div className="flex items-center justify-between gap-3"><b className="text-fg">{t.table}</b><span className="text-right text-muted"><b className="text-brand-text">{minutesText(t.avgMinutes)}</b> average</span></div>
+              <div className="h-1.5 rounded-full bg-subtle mt-1.5" aria-hidden="true"><div className="h-1.5 rounded-full bg-brand" style={{ width: `${Math.max(4, Math.round((t.avgMinutes / longest) * 100))}%` }} /></div>
+              <p className="text-xs text-muted mt-1">{t.visits} visit{t.visits === 1 ? '' : 's'} · longest {minutesText(t.longestMinutes)}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+      {note}
+    </div>
+  );
 }
 
 const QUAD_ORDER = ['STAR', 'PLOWHORSE', 'PUZZLE', 'DOG'] as const;

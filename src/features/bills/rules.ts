@@ -12,6 +12,8 @@ export function billActions(b: Pick<Bill, 'status'>) {
     edit: b.status !== 'REFUNDED',
     refund: b.status === 'PAID' || b.status === 'PARTIALLY_REFUNDED',
     void: b.status === 'ACTIVE',
+    /** Separate bills for a group, before or after payment. */
+    split: b.status === 'BILL_PRINTED' || b.status === 'PAID',
   };
 }
 

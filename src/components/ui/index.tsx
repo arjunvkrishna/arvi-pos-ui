@@ -67,12 +67,14 @@ export function CheckRow({ id, checked, onChange, title, hint }: { id: string; c
 }
 
 /** Segmented control with optional counts (e.g. "Available 12"). */
-export function SegmentedTabs<T extends string>({ value, onChange, options, label }: {
+export function SegmentedTabs<T extends string>({ value, onChange, options, label, wrap = true }: {
   value: T; onChange: (v: T) => void; label: string;
   options: { value: T; label: string; count?: number; id?: string }[];
+  /** Options flow onto more lines instead of scrolling sideways, so none is cut off at the edge (pass false to keep one scrolling row). */
+  wrap?: boolean;
 }) {
   return (
-    <div role="tablist" aria-label={label} className="inline-flex max-w-full overflow-x-auto no-scrollbar rounded-lg bg-subtle p-0.5 text-sm">
+    <div role="tablist" aria-label={label} className={`max-w-full rounded-lg bg-subtle p-0.5 text-sm ${wrap ? 'flex flex-wrap w-fit gap-0.5' : 'inline-flex overflow-x-auto no-scrollbar'}`}>
       {options.map((o) => {
         const on = o.value === value;
         return (

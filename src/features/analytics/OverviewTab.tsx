@@ -124,6 +124,7 @@ export function OverviewTab({ q, layout }: { q: Query; layout: Layout }) {
     ),
     staff: card('staff', (i) => <W.StaffWidget i={i} />),
     tables: card('tables', (i) => <W.TablesWidget i={i} />),
+    dineIn: card('dineIn', (i) => <W.DineInWidget i={i} />),
     menuMatrix: card('menuMatrix', (i) => <W.MenuMatrixWidget i={i} />),
     dishProfit: card('dishProfit', (i) => <W.DishProfitWidget i={i} />),
     neverSold: card('neverSold', (i) => <W.NeverSoldWidget i={i} />),

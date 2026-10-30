@@ -29,7 +29,7 @@ import { ActiveOrdersDialog } from './ActiveOrdersDialog';
 import { ModifierModal } from '../modifiers/ModifierModal';
 import { fetchModifiersForMenuItem, fetchCombosForMenuItem, menuItemModifiersKey, menuItemCombosKey } from '../modifiers/api';
 import {
-  addLine, cartTotals, configuredGst, discountPending, discountProblem, DEFAULT_TABLES, draftFromOrder, gstPercent, gstSplit, hasOrderChanges, IN_BILL_FLOW, isManagerRole, locationReady, noteWithPrefix, num, orderGates, orderKey, orderMode, transferBlocked, upsertOrder,
+  addLine, cartTotals, configuredGst, phoneDigits, discountPending, discountProblem, DEFAULT_TABLES, draftFromOrder, gstPercent, gstSplit, hasOrderChanges, IN_BILL_FLOW, isManagerRole, locationReady, noteWithPrefix, num, orderGates, orderKey, orderMode, transferBlocked, upsertOrder,
   type CartLine, type Draft, type DishRef, type Mode,
 } from './rules';
 
@@ -100,7 +100,7 @@ export function PosPage() {
   const canPrint = canPrintBill(user);
   const totals = cartTotals({ cart: draft.cart, mode: place.mode, isManager, canDiscount: canPrint, discount: draft.discount, gstSel: draft.gstSel, gstCustom: draft.gstCustom, parcel: draft.parcel, defaultParcel, order, cfg });
   const ready = locationReady(place.mode, place.table, draft.customer);
-  const changed = hasOrderChanges({ ready, cart: draft.cart, order, mode: place.mode, customer: draft.customer, notes: draft.notes, parcelVisible: totals.hasParcel, parcel: draft.parcel });
+  const changed = hasOrderChanges({ ready, cart: draft.cart, order, mode: place.mode, customer: draft.customer, phone: draft.phone, notes: draft.notes, parcelVisible: totals.hasParcel, parcel: draft.parcel });
 
   const tokenQ = useQuery({ queryKey: [...tokenKey, place.mode], queryFn: () => fetchNextToken(place.mode as 'TAKEAWAY' | 'OUTDOOR'), enabled: place.mode !== 'TABLE' && !order, staleTime: 0, retry: false });
   const token = (place.mode === 'TAKEAWAY' ? order?.takeawayToken : order?.outdoorToken) || tokenQ.data || (place.mode === 'TAKEAWAY' ? 'TAK-001' : 'OUT-001');
@@ -234,12 +234,10 @@ export function PosPage() {
       tip: number;
       payments?: { mode: string; amount: number }[];
       customerId?: number | null;
-      giftCardCode?: string;
       redeemLoyaltyPoints?: number;
-      couponCode?: string;
-    }) => confirmPayment(v.id, v.mode, v.notes, v.tip, v.payments, v.customerId, v.giftCardCode, v.redeemLoyaltyPoints, v.couponCode),
+    }) => confirmPayment(v.id, v.mode, v.notes, v.tip, v.payments, v.customerId, v.redeemLoyaltyPoints),
     onSuccess: async (settled, v) => {
-      showToast(`Payment confirmed & settled for Bill #${settled.billNumber}! Table released.`, 'success');
+      showToast(`Payment confirmed & settled for Bill #${settled.billNumber}! Table released.${settled.customerPoints != null && settled.customerId ? ` ${settled.customerName || 'The customer'} now has ${settled.customerPoints} points.` : ''}`, 'success');
       setDialog(null);
       await qc.cancelQueries({ queryKey: activeKey });
       qc.setQueryData<Bill[]>(activeKey, (l) => upsertOrder(l, { ...settled, status: 'PAID' }));
@@ -298,10 +296,13 @@ export function PosPage() {
 
   const onSave = () => {
     if (!guard(gates.save) || unsavedDiscount()) return;
+    const phone = phoneDigits(draft.phone);
+    if (phone && phone.length < 10) { showToast('The loyalty phone number needs 10 digits. Correct it or clear it.', 'warning'); document.getElementById('cartCustomerPhone')?.focus(); setCartOpen(true); return; }
     const mode = place.mode;
     const payload: SaveOrderPayload = {
       orderId: order?.id ?? null, orderType: mode, tableNumber: mode === 'TABLE' ? place.table : null,
       customerName: draft.customer.trim() || (mode === 'TAKEAWAY' ? 'Guest' : ''),
+      customerPhone: phone,
       outdoorToken: mode === 'OUTDOOR' ? order?.outdoorToken ?? null : null,
       takeawayToken: mode === 'TAKEAWAY' ? order?.takeawayToken ?? null : null,
       notes: noteWithPrefix(mode, draft.notes),
@@ -414,7 +415,7 @@ This will remove the order permanently.`)) return;
           order={payOrder}
           busy={pay.isPending}
           onClose={() => setDialog(null)}
-          onConfirm={(mode, notes, tip, payments, customerId, giftCardCode, redeemPoints, couponCode) =>
+          onConfirm={(mode, notes, tip, payments, customerId, redeemPoints) =>
             pay.mutate({
               id: payOrder.id,
               mode,
@@ -422,9 +423,7 @@ This will remove the order permanently.`)) return;
               tip,
               payments,
               customerId,
-              giftCardCode,
               redeemLoyaltyPoints: redeemPoints,
-              couponCode,
             })
           }
         />

@@ -7,13 +7,14 @@ import { formatISTDateTime } from '../../lib/time';
 import { usePrintUi } from '../printing/store';
 import { billsKey, fetchBill, fetchBillStaff, fetchBillSummary, fetchBillsPage, fetchDeletableBillIds, type BillLogFilters, type Mode } from './api';
 import { DeleteBillDialog, EditBillDialog, RefundDialog, VoidOrderDialog } from './BillDialogs';
+import { SplitBillDialog } from './SplitBillDialog';
 import { PromotionsSection } from './PromotionsSection';
 import { billActions, statusTone, type Location } from './rules';
-import type { BillLogRow } from './types';
+import type { Bill, BillLogRow } from './types';
 import { orderKind } from '../printing/rules';
 
 const ymd = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-type Modal = { kind: 'edit'; id: number } | { kind: 'refund'; id: number } | { kind: 'void'; bill: BillLogRow } | { kind: 'delete'; bill: BillLogRow } | null;
+type Modal = { kind: 'split'; bill: Bill } | { kind: 'edit'; id: number } | { kind: 'refund'; id: number } | { kind: 'void'; bill: BillLogRow } | { kind: 'delete'; bill: BillLogRow } | null;
 
 /** The value after it has stopped changing for `ms`, so typing in a search box is not a request per key. */
 function useDebounced<T>(value: T, ms = 300) {
@@ -49,6 +50,7 @@ export function BillsPage() {
   const canPromos = me.role === 'ADMIN' || me.role === 'MANAGER';
 
   const reprint = async (id: number) => { try { openReceipt(await fetchBill(id)); } catch (e) { showToast(`Failed to fetch bill receipt: ${e instanceof Error ? e.message : e}`, 'error'); } };
+  const openSplit = async (id: number) => { try { setModal({ kind: 'split', bill: await fetchBill(id) }); } catch (e) { showToast(`Failed to load the bill: ${e instanceof Error ? e.message : e}`, 'error'); } };
   const loc = (b: BillLogRow) => { const k = orderKind(b); return k === 'OUTDOOR' ? <span><span className="flex items-center gap-1.5"><Badge tone="ok">OUTDOOR</Badge><span className="font-mono text-xs">{b.outdoorToken}</span></span>{b.customerName && <span className="block text-xs text-muted mt-0.5">{b.customerName}</span>}</span> : k === 'TAKEAWAY' ? <span><span className="flex items-center gap-1.5"><Badge tone="brand">TAKEAWAY</Badge><span className="font-mono text-xs">{b.takeawayToken}</span></span>{b.customerName && <span className="block text-xs text-muted mt-0.5">{b.customerName}</span>}</span> : <span><span className="font-medium text-fg">{b.tableNumber || '-'}</span>{b.customerName && <span className="block text-xs text-muted">{b.customerName}</span>}</span>; };
 
   return (
@@ -79,7 +81,7 @@ export function BillsPage() {
                     <td data-label="" className="cell-title font-mono font-semibold line-through text-muted">{b.billNumber}</td>
                     <td data-label="When" className="text-xs whitespace-nowrap text-muted">{formatISTDateTime(b.createdAt)}</td><td data-label="Table" className="text-muted">{loc(b)}</td>
                     <td data-label="Staff" className="text-muted">{b.createdByName || 'Staff'}</td><td data-label="Cashier" className="text-muted">{b.printedByName || '-'}</td>
-                    <td data-label="Items" className="text-muted">{b.itemCount} items</td><td data-label="Payment" className="text-muted">{b.paymentMode}</td><td data-label="Net" className="line-through text-muted">₹{Number(b.netAmount || 0).toFixed(2)}</td>
+                    <td data-label="Items" className="text-muted">{b.itemCount} items</td><td data-label="Payment" className="text-muted">{b.paymentSummary || b.paymentMode}</td><td data-label="Net" className="line-through text-muted">₹{Number(b.netAmount || 0).toFixed(2)}</td>
                     <td data-label="Status"><Badge icon="fa-trash-can">DELETED</Badge></td>
                     <td className="text-right text-[11px] text-muted"><div>By {b.deletedByName || '-'} · {formatISTDateTime(b.deletedAt)}</div><div className="italic break-words">{b.deleteReason || ''}</div></td>
                   </tr>);
@@ -89,10 +91,11 @@ export function BillsPage() {
                     <td data-label="" className="cell-title font-mono font-semibold text-brand-text">{b.billNumber}</td>
                     <td data-label="When" className="text-xs whitespace-nowrap">{formatISTDateTime(b.createdAt)}</td><td data-label="Table">{loc(b)}</td>
                     <td data-label="Staff" className="text-brand-text"><i className="fa-solid fa-user-check text-[10px] mr-1" />{b.createdByName || 'Staff'}</td><td data-label="Cashier" className="text-info"><i className="fa-solid fa-user-shield text-[10px] mr-1" />{b.printedByName || 'Pending / Staff'}</td>
-                    <td data-label="Items">{b.itemCount} items</td><td data-label="Payment"><Badge>{b.paymentMode}</Badge></td><td data-label="Net" className="font-semibold text-fg">₹{Number(b.netAmount || 0).toFixed(2)}</td>
+                    <td data-label="Items">{b.itemCount} items</td><td data-label="Payment"><Badge>{b.paymentSummary || b.paymentMode}</Badge></td><td data-label="Net" className="font-semibold text-fg">₹{Number(b.netAmount || 0).toFixed(2)}</td>
                     <td data-label="Status"><Badge tone={statusTone(b.status)}>{b.status}</Badge>{Number(b.totalRefunded) > 0 && <span className="block text-[11px] text-danger font-mono mt-0.5">Ref: ₹{Number(b.totalRefunded).toFixed(2)}</span>}</td>
                     <td className="cell-actions"><div className="flex flex-wrap items-center justify-end gap-1.5 w-full md:w-auto">
                       <button type="button" onClick={() => void reprint(b.id)} title="Print receipt" aria-label={`Print receipt ${b.billNumber}`} className="btn btn-soft-brand btn-icon btn-sm"><i className="fa-solid fa-print" /></button>
+                      {a.split && <button type="button" onClick={() => void openSplit(b.id)} title="Split by items: a separate bill for each guest" aria-label={`Split bill ${b.billNumber}`} className="btn btn-soft-brand btn-sm"><i className="fa-solid fa-people-arrows" />Split</button>}
                       {a.edit && <button type="button" onClick={() => setModal({ kind: 'edit', id: b.id })} title="Edit bill details" aria-label={`Edit bill ${b.billNumber}`} className="btn btn-secondary btn-icon btn-sm"><i className="fa-solid fa-pen-to-square" /></button>}
                       {a.refund && <button type="button" onClick={() => setModal({ kind: 'refund', id: b.id })} title="Auditable refund" className="btn btn-soft-danger btn-sm"><i className="fa-solid fa-rotate-left" />Refund</button>}
                       {a.void && <button type="button" onClick={() => setModal({ kind: 'void', bill: b })} title="Void unpaid order" className="btn btn-soft-danger btn-sm"><i className="fa-solid fa-ban" />Void</button>}
@@ -106,6 +109,7 @@ export function BillsPage() {
         {bills.data && <Pager id="billsTableBodyPager" page={bills.data.page} size={bills.data.size} total={bills.data.total} totalPages={bills.data.totalPages} count={rows.length} onPage={setPage} />}
       </div>
 
+      {modal?.kind === 'split' && <SplitBillDialog bill={modal.bill} onClose={() => setModal(null)} />}
       {modal?.kind === 'edit' && <EditBillDialog billId={modal.id} onClose={() => setModal(null)} />}
       {modal?.kind === 'refund' && <RefundDialog billId={modal.id} onClose={() => setModal(null)} />}
       {modal?.kind === 'void' && <VoidOrderDialog bill={modal.bill} onClose={() => setModal(null)} />}

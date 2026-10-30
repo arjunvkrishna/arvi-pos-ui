@@ -214,8 +214,7 @@ export function OwnerDashboardPage() {
                             className={`h-2 rounded-full ${
                               mode === 'CASH' ? 'bg-amber-500' :
                               mode === 'UPI' ? 'bg-sky-500' :
-                              mode === 'CARD' ? 'bg-indigo-500' :
-                              mode === 'GIFT_CARD' ? 'bg-pink-500' : 'bg-emerald-500'
+                              mode === 'CARD' ? 'bg-indigo-500' : 'bg-emerald-500'
                             }`}
                             style={{ width: `${Math.min(100, pct)}%` }}
                           />

@@ -78,3 +78,12 @@ export const QUADRANT: Record<string, { label: string; tone: 'ok' | 'info' | 'wa
   PUZZLE: { label: 'Profitable, rare', tone: 'info', advice: 'Earns well but few order it. Promote it or move it up the menu.' },
   DOG: { label: 'Weak', tone: 'danger', advice: 'Sells little and earns little. Rework it or take it off.' },
 };
+
+/** A stay in minutes as a person would say it: "45 min", "1 h 12 min", "2 h". */
+export function minutesText(minutes: number): string {
+  const m = Math.round(minutes);
+  if (m < 1) return 'under 1 min';
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60), r = m % 60;
+  return r === 0 ? `${h} h` : `${h} h ${r} min`;
+}

@@ -69,7 +69,7 @@ export function ExpensesPage() {
 
       <div className="card p-3 flex flex-wrap items-center gap-2">
         <select id="expFilterMonth" value={month} onChange={(e) => setMonth(parseInt(e.target.value, 10))} className="input w-36" aria-label="Month">{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>
-        <select id="expFilterYear" value={year} onChange={(e) => setYear(parseInt(e.target.value, 10))} className="input w-24" aria-label="Year">{years.map((y) => <option key={y}>{y}</option>)}</select>
+        <select id="expFilterYear" value={year} onChange={(e) => setYear(parseInt(e.target.value, 10))} className="input w-28" aria-label="Year">{years.map((y) => <option key={y}>{y}</option>)}</select>
         {sub === 'all' && (<>
           <select id="expFilterType" value={type} onChange={(e) => setType(e.target.value)} className="input w-40" aria-label="Type"><option value="ALL">All types</option>{EXPENSE_TYPES.map(([v, l]) => <option key={v} value={v}>{l.split(' (')[0]}</option>)}</select>
           <select id="expFilterStatus" value={status} onChange={(e) => setStatus(e.target.value)} className="input w-40" aria-label="Status"><option value="ALL">All status</option><option value="PAID">Paid</option><option value="PENDING">Pending / due</option></select>

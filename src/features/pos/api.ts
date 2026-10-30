@@ -10,7 +10,7 @@ export const tablesKey = ['dining-tables'] as const;
 export const tokenKey = ['next-token'] as const;
 
 export interface SaveOrderPayload {
-  orderId: number | null; orderType: Mode; tableNumber: string | null; customerName: string; customerId?: number | null; outdoorToken: string | null; takeawayToken: string | null;
+  orderId: number | null; orderType: Mode; tableNumber: string | null; customerName: string; customerId?: number | null; /** The loyalty number given when ordering: joins the program if new, '' removes it, absent keeps it. */ customerPhone?: string; outdoorToken: string | null; takeawayToken: string | null;
   notes: string; parcelCharge: number | null;
   items: { menuItemId: number; itemName: string; quantity: number; price: number; customization: string; isTakeaway: boolean; modifiersSnapshot?: string; comboSnapshot?: string }[];
   discountPercent?: number; gstEnabled?: boolean; taxPercent?: number; cgstPercent?: number; sgstPercent?: number;
@@ -37,9 +37,7 @@ export const confirmPayment = (
   tipAmount = 0,
   payments?: { mode: string; amount: number; reference?: string }[],
   customerId?: number | null,
-  giftCardCode?: string,
   redeemLoyaltyPoints?: number,
-  couponCode?: string
 ) =>
   api<Bill>(`/bills/${id}/confirm-payment`, {
     method: 'POST',
@@ -49,9 +47,7 @@ export const confirmPayment = (
       ...(tipAmount > 0 ? { tipAmount } : {}),
       ...(payments && payments.length > 1 ? { payments } : {}),
       ...(customerId ? { customerId } : {}),
-      ...(giftCardCode ? { giftCardCode } : {}),
       ...(redeemLoyaltyPoints ? { redeemLoyaltyPoints } : {}),
-      ...(couponCode ? { couponCode } : {}),
     },
   });
 export const cancelOrder = (id: number) => api(`/bills/${id}/cancel`, { method: 'POST' });

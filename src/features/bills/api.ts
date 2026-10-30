@@ -1,3 +1,4 @@
+import type { SplitBillRequest } from '../printing/api';
 import { api, apiPage } from '../../api/client';
 import type { Bill, BillLogRow } from './types';
 
@@ -44,3 +45,13 @@ export const fetchPromotions = () => api<Promotion[]>('/promotions');
 export const savePromotion = (id: number | null, p: PromotionInput) => (id ? api<Promotion>(`/promotions/${id}`, { method: 'PUT', body: p }) : api<Promotion>('/promotions', { method: 'POST', body: p }));
 export const togglePromotion = (id: number) => api<Promotion>(`/promotions/${id}/toggle-active`, { method: 'PATCH' });
 export const deletePromotion = (id: number) => api(`/promotions/${id}`, { method: 'DELETE' });
+
+/** What one of the bills made by splitting a bill by items says; the amounts of all of them add up to the bill. */
+export interface SplitPortion {
+  number: number;
+  items: { billItemId: number; itemName: string; quantity: number; unitPrice: number; subtotal: number; takeaway: boolean }[];
+  subtotal: number; discountAmount: number; promotionDiscountAmount: number; couponDiscount: number; parcelCharge: number;
+  cgstAmount: number; sgstAmount: number; taxAmount: number; roundOff: number; netAmount: number;
+}
+export interface SplitPreview { billId: number; billNumber: string; status: string; netAmount: number; portions: SplitPortion[] }
+export const previewSplit = (id: number, body: SplitBillRequest) => api<SplitPreview>(`/bills/${id}/split-preview`, { method: 'POST', body });

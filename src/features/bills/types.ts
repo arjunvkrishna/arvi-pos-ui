@@ -8,7 +8,9 @@ export interface BillItem {
 export interface Bill {
   id: number; billNumber: string; kotNumber?: string | null; status: string; paymentStatus?: string; orderType?: 'TABLE' | 'OUTDOOR' | 'TAKEAWAY' | string;
   tableNumber?: string | null; outdoorToken?: string | null; takeawayToken?: string | null; customerName?: string | null; notes?: string | null;
-  customerId?: number | null; customerPhone?: string | null; businessDate?: string | null;
+  customerId?: number | null; customerPhone?: string | null;
+  /** The loyalty member's points usable now (0 once lapsed) and the last valid day; absent without a member. */
+  customerPoints?: number | null; customerPointsExpireAt?: string | null; businessDate?: string | null;
   createdAt?: string | null; billedAt?: string | null; createdByName?: string | null; printedByName?: string | null;
   items: BillItem[]; latestKotItems?: BillItem[]; kotPrintedAt?: string | null; kotUpdatedAt?: string | null; kotUpdateCount?: number; kotNoticeType?: string | null; kotLastChanges?: string | null;
   paymentMode?: string; subtotal: number; discountPercent?: number; discountAmount?: number; taxPercent?: number; taxAmount?: number; gstEnabled?: boolean; gstin?: string | null;
@@ -21,5 +23,5 @@ export interface Bill {
 export interface BillLogRow {
   id: number; billNumber: string; status: string; orderType?: string; tableNumber?: string | null; outdoorToken?: string | null; takeawayToken?: string | null;
   customerName?: string | null; createdByName?: string | null; printedByName?: string | null; createdAt?: string | null; itemCount: number;
-  paymentMode?: string; netAmount: number; totalRefunded?: number; deletedAt?: string | null; deletedByName?: string | null; deleteReason?: string | null;
+  paymentMode?: string; paymentSummary?: string | null; netAmount: number; totalRefunded?: number; deletedAt?: string | null; deletedByName?: string | null; deleteReason?: string | null;
 }
